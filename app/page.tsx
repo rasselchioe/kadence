@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 /**
  * Landing placeholder. The full marketing page + magic-link form lands in M1.
@@ -8,9 +9,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background px-6 py-16 md:px-12 md:py-24">
       <div className="mx-auto flex max-w-5xl flex-col gap-16">
-        <header className="flex items-baseline justify-between border-b border-hairline pb-4">
+        <header className="flex items-center justify-between border-b border-hairline pb-4">
           <span className="mono-tag text-foreground">Kadence</span>
-          <span className="label">[ index ] · 00</span>
+          <div className="flex items-center gap-4">
+            <span className="label">[ index ] · 00</span>
+            <ThemeToggle />
+          </div>
         </header>
 
         <section className="flex flex-col gap-8">
