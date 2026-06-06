@@ -12,7 +12,9 @@ export default function Home() {
         </header>
 
         <section className="flex flex-col gap-8">
-          <span className="label">Editorial cycling-analytics for one rider</span>
+          <span className="label">
+            Editorial cycling-analytics for one rider
+          </span>
           <h1 className="display max-w-3xl text-foreground">
             An archive, <em>not</em> a network.
           </h1>

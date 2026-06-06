@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import {
+  Space_Grotesk,
+  Instrument_Serif,
+  JetBrains_Mono,
+} from "next/font/google";
 import "./globals.css";
 
 // Three voices — Design Spec § 04.
@@ -38,9 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${sans.variable} ${serif.variable} ${mono.variable}`}
-      >
+      <body className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
         {children}
       </body>
     </html>
