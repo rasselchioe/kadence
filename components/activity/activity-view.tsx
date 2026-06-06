@@ -1,11 +1,29 @@
-import type { ClimbCategory } from "@/lib/gpx/schema";
+"use client";
+
+import dynamic from "next/dynamic";
 import type { PreviewRide } from "@/lib/gpx/preview";
-import { climbCategoryColor } from "@/lib/tokens";
+import type { ClimbCategory } from "@/lib/gpx/schema";
+import { chartColors, climbCategoryColor } from "@/lib/tokens";
 import { fmtDuration } from "@/lib/units";
 import { StatGrid, type StatCardProps } from "@/components/data/stat-card";
 import { SplitsTable } from "@/components/data/splits-table";
-import { RouteSketch } from "@/components/viz/route-sketch";
-import { ElevationProfile } from "@/components/viz/elevation-profile";
+import { MetricChart } from "@/components/viz/metric-chart";
+import {
+  SelectionProvider,
+  useSelection,
+} from "@/components/activity/selection-context";
+
+const RouteMap = dynamic(
+  () => import("@/components/map/route-map").then((m) => m.RouteMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-bone/50">
+        <span className="label">loading map…</span>
+      </div>
+    ),
+  },
+);
 
 const CATEGORY_LABEL: Record<ClimbCategory, string> = {
   hc: "HC",
@@ -38,8 +56,19 @@ function Frame({
   );
 }
 
-export function ResultsView({ ride }: { ride: PreviewRide }) {
+export function ActivityView({ ride }: { ride: PreviewRide }) {
+  return (
+    <SelectionProvider>
+      <ActivityBody ride={ride} />
+    </SelectionProvider>
+  );
+}
+
+function ActivityBody({ ride }: { ride: PreviewRide }) {
+  const { index } = useSelection();
   const m = ride.metrics;
+  const highlightKm =
+    index != null ? Math.floor(ride.samples[index].d / 1000) + 1 : null;
 
   const started = ride.startedAt
     ? new Date(ride.startedAt).toLocaleDateString("en-US", {
@@ -90,18 +119,73 @@ export function ResultsView({ ride }: { ride: PreviewRide }) {
 
       <StatGrid stats={stats} />
 
-      <div className="grid gap-10 lg:grid-cols-[3fr_2fr]">
-        <Frame ix="01" title="Elevation · climbs detected">
-          <div className="aspect-[18/5] w-full">
-            <ElevationProfile elevation={ride.elevation} climbs={ride.climbs} />
-          </div>
-        </Frame>
-        <Frame ix="02" title="Route">
-          <div className="aspect-[11/8] w-full rounded-card border border-hairline bg-bone/40">
-            <RouteSketch route={ride.route} />
-          </div>
-        </Frame>
-      </div>
+      <Frame ix="01" title="Route">
+        <div className="h-[340px] w-full overflow-hidden rounded-card border border-hairline md:h-[440px]">
+          <RouteMap
+            route={ride.route}
+            samples={ride.samples}
+            bounds={ride.bounds}
+          />
+        </div>
+        <p className="label text-muted-foreground">
+          Hover the map or a chart to scrub · click to pin · esc to clear
+        </p>
+      </Frame>
+
+      <Frame ix="02" title="Analysis">
+        <div className="flex flex-col gap-5">
+          <MetricChart
+            samples={ride.samples}
+            dataKey="e"
+            label="Elevation · climbs shaded"
+            unit="m"
+            color={chartColors.elevation}
+            climbs={ride.climbs}
+            height={150}
+          />
+          <MetricChart
+            samples={ride.samples}
+            dataKey="speed"
+            label="Speed"
+            unit="km/h"
+            color={chartColors.speed}
+            baseline="zero"
+            precision={1}
+          />
+          {ride.hasHr && (
+            <MetricChart
+              samples={ride.samples}
+              dataKey="hr"
+              label="Heart rate"
+              unit="bpm"
+              color={chartColors.hr}
+            />
+          )}
+          {ride.hasPower && (
+            <MetricChart
+              samples={ride.samples}
+              dataKey="power"
+              label="Power"
+              unit="W"
+              color={chartColors.power}
+              baseline="zero"
+            />
+          )}
+          {ride.hasCad && (
+            <MetricChart
+              samples={ride.samples}
+              dataKey="cad"
+              label="Cadence"
+              unit="rpm"
+              color={chartColors.cadence}
+              baseline="zero"
+            />
+          )}
+          <span className="label text-right text-muted-foreground">
+            distance →
+          </span>
+        </div>
+      </Frame>
 
       {ride.climbs.length > 0 && (
         <Frame ix="03" title={`Climbs · ${ride.climbs.length}`}>
@@ -137,7 +221,7 @@ export function ResultsView({ ride }: { ride: PreviewRide }) {
       )}
 
       <Frame ix="04" title="Splits">
-        <SplitsTable splits={ride.splits} />
+        <SplitsTable splits={ride.splits} highlightKm={highlightKm} />
       </Frame>
     </div>
   );
