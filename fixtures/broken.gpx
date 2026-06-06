@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="RouteBuilder"
+  xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Planned route — not a ride</name></metadata>
+  <wpt lat="45.5231" lon="-122.6765"><name>Start</name></wpt>
+  <wpt lat="45.5400" lon="-122.6500"><name>Turn</name></wpt>
+  <rte>
+    <name>Loop</name>
+    <rtept lat="45.5231" lon="-122.6765"><ele>200</ele></rtept>
+    <rtept lat="45.5400" lon="-122.6500"><ele>240</ele></rtept>
+    <rtept lat="45.5600" lon="-122.6300"><ele>300</ele></rtept>
+  </rte>
+</gpx>
