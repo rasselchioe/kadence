@@ -1,0 +1,6 @@
+# Native deps trusted to run their install scripts.
+# esbuild powers Vitest; sharp powers next/image; unrs-resolver backs eslint.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true

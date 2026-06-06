@@ -1,0 +1,2539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kadence — Design Spec, v0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* core */
+    --bone:        #F8F6F1;
+    --bone-2:      #EDE9DF;
+    --paper:       #FCFAF5;
+    --ink:         #15140F;
+    --carbon:      #2A2823;
+    --muted:       #8C8678;
+    --muted-2:     #B3AC9D;
+    --hairline:    #C9C1B0;
+
+    /* signals */
+    --crimson:     #C13525;   /* primary accent — climbs, signal, brand */
+    --crimson-ink: #8A1F12;
+    --cobalt:      #2748B5;   /* speed / data */
+    --field:       #455F2C;   /* terrain / success */
+    --sun:         #D9A12B;   /* sun / warning */
+    --slate:       #4B5A6B;   /* heart rate / cool data */
+
+    /* dark mode */
+    --night:       #100F0C;
+    --night-2:     #1A1814;
+    --night-ink:   #ECE6D8;
+
+    --r-card:      4px;
+    --r-pill:      999px;
+    --r-btn:       8px;   /* button radius — was pill, now rounded-square */
+    --r-input:     8px;   /* matches button */
+    --hair:        1px solid var(--hairline);
+    --hair-ink:    1px solid var(--ink);
+
+    --f-sans: "Space Grotesk", system-ui, sans-serif;
+    --f-serif: "Instrument Serif", "Times New Roman", serif;
+    --f-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bone);
+    color: var(--ink);
+    font-family: var(--f-sans);
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a{ color:inherit; }
+
+  /* layout */
+  .doc{ max-width: 1480px; margin: 0 auto; padding: 0 56px 160px; }
+  .row{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: 24px; }
+  .span-2{ grid-column: span 2; } .span-3{ grid-column: span 3; }
+  .span-4{ grid-column: span 4; } .span-5{ grid-column: span 5; }
+  .span-6{ grid-column: span 6; } .span-7{ grid-column: span 7; }
+  .span-8{ grid-column: span 8; } .span-9{ grid-column: span 9; }
+  .span-12{ grid-column: span 12; }
+
+  /* type */
+  .mono{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .label{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .num{ font-family: var(--f-mono); }
+  .serif{ font-family: var(--f-serif); font-style: italic; }
+  .display{
+    font-family: var(--f-sans);
+    font-weight: 600;
+    font-size: calc(clamp(80px, 12vw, 220px) * var(--display-scale, 1));
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+  }
+  .h1{ font-size: 64px; line-height: 0.95; letter-spacing: -0.035em; font-weight: 600; margin: 0; }
+  .h2{ font-size: 44px; line-height: 1.0; letter-spacing: -0.025em; font-weight: 600; margin: 0; }
+  .h3{ font-size: 22px; line-height: 1.15; letter-spacing: -0.015em; font-weight: 600; margin: 0; }
+  .body-lg{ font-size: 19px; line-height: 1.45; }
+  .body{ font-size: 15px; line-height: 1.55; }
+  .small{ font-size: 13px; line-height: 1.5; color: var(--carbon); }
+
+  /* header / index */
+  .topbar{
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bone);
+    border-bottom: var(--hair);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 56px;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .topbar a{ text-decoration: none; }
+  .topbar nav{ display: flex; gap: 22px; }
+  .topbar nav a:hover{ color: var(--crimson); }
+  .brand-mark{ display:inline-flex; gap:6px; align-items:center; font-weight: 600; }
+  .brand-mark .dot{ width:9px; height:9px; border-radius:50%; background: var(--crimson); display:inline-block; }
+  .clock{ color: var(--muted); }
+
+  /* ticker */
+  .ticker{
+    border-top: var(--hair-ink);
+    border-bottom: var(--hair-ink);
+    overflow: hidden;
+    background: var(--ink);
+    color: var(--bone);
+  }
+  .ticker-track{
+    display: inline-flex; gap: 32px; align-items: center;
+    white-space: nowrap;
+    padding: 14px 0;
+    animation: ticker 50s linear infinite;
+    font-family: var(--f-mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ticker-track > span{ display: inline-flex; gap: 32px; align-items: center; }
+  .ticker-track .star{ color: var(--crimson); }
+  @keyframes ticker { from{ transform: translateX(0) } to { transform: translateX(-50%) } }
+
+  /* hero */
+  .hero{
+    padding: 80px 0 24px;
+    border-bottom: var(--hair-ink);
+  }
+  .hero .display{
+    color: var(--ink);
+    font-feature-settings: "ss01" on;
+  }
+  .hero .display em{
+    font-family: var(--f-serif);
+    font-weight: 400;
+    font-style: italic;
+    color: var(--crimson);
+    letter-spacing: -0.02em;
+  }
+  .hero-meta{ display:flex; gap:48px; padding: 28px 0 12px; align-items: flex-end; }
+  .hero-meta > div{ flex:1; }
+
+  /* section */
+  section.sec{ padding: 72px 0 0; }
+  .sec-head{
+    display: grid; grid-template-columns: 80px 1fr 1fr; gap: 24px;
+    padding-bottom: 28px; border-bottom: var(--hair-ink);
+    align-items: end;
+  }
+  .sec-head .ix{ font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.06em; }
+  .sec-head h2{ font-size: 56px; line-height: 0.95; letter-spacing: -0.03em; margin: 0; font-weight: 600; }
+  .sec-head h2 em{ font-family: var(--f-serif); font-weight: 400; font-style: italic; color: var(--crimson); }
+  .sec-head .desc{ color: var(--carbon); padding-bottom: 4px; }
+  .sec-body{ padding: 40px 0 0; }
+
+  /* cards / frames */
+  .frame{
+    background: var(--paper);
+    border: var(--hair);
+    border-radius: var(--r-card);
+    position: relative;
+  }
+  .frame .frame-h{
+    display:flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px;
+    border-bottom: var(--hair);
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .frame .frame-b{ padding: 24px; }
+
+  /* visual DNA */
+  .dna{ display:grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+  .dna-card{ border: var(--hair); border-radius: var(--r-card); background: var(--paper); padding: 24px; min-height: 360px; display:flex; flex-direction: column; gap: 16px; }
+  .dna-card .tag{ display:inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--crimson); }
+  .dna-card h4{ margin: 0; font-size: 22px; line-height: 1.1; letter-spacing: -0.01em; }
+  .dna-card ul{ margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; color: var(--carbon); font-size: 14px; }
+  .dna-card ul li{ display:grid; grid-template-columns: 26px 1fr; gap: 6px; }
+  .dna-card ul li::before{ content: ""; }
+  .dna-card ul li .k{ font-family: var(--f-mono); color: var(--muted); font-size: 11px; }
+
+  /* name list */
+  .names{ display: grid; gap: 0; border-top: var(--hair-ink); }
+  .name-row{
+    display: grid; grid-template-columns: 60px 280px 1fr 160px;
+    align-items: center;
+    padding: 22px 8px;
+    border-bottom: var(--hair);
+    transition: background .12s ease;
+  }
+  .name-row:hover{ background: var(--paper); }
+  .name-row .ix{ font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+  .name-row .nm{ font-size: 36px; letter-spacing: -0.02em; font-weight: 600; }
+  .name-row .nm em{ font-family: var(--f-serif); font-style: italic; font-weight: 400; color: var(--crimson); }
+  .name-row .why{ color: var(--carbon); font-size: 14px; }
+  .name-row .stat{ font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); text-align: right; }
+  .name-row.picked{ background: var(--ink); color: var(--bone); }
+  .name-row.picked .ix, .name-row.picked .why, .name-row.picked .stat{ color: var(--muted-2); }
+  .name-row.picked .nm em{ color: #F4B7A8; }
+  .name-row.picked .stat strong{ color: var(--bone); }
+
+  /* color */
+  .swatches{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .sw{ border: var(--hair); border-radius: var(--r-card); overflow: hidden; }
+  .sw .chip{ height: 120px; }
+  .sw .meta{ padding: 12px 12px 14px; background: var(--paper); }
+  .sw .meta .nm{ font-size: 14px; font-weight: 600; }
+  .sw .meta .hex{ font-family: var(--f-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+  .sw .meta .role{ font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 4px; }
+
+  .palette-row{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; }
+  .mode-card{ border: var(--hair); border-radius: var(--r-card); padding: 24px; }
+  .mode-card.light{ background: var(--paper); }
+  .mode-card.dark{ background: var(--night); color: var(--night-ink); border-color: #2A2620; }
+  .mode-card h4{ margin: 0 0 16px; font-size: 14px; font-family: var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+  .mode-strip{ display:flex; gap: 8px; }
+  .mode-strip > div{ flex:1; height: 56px; border-radius: 2px; position: relative; }
+  .mode-strip > div span{ position: absolute; bottom: -22px; left: 0; font-family: var(--f-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; }
+
+  /* type spec */
+  .type-spec{ display: grid; gap: 0; border-top: var(--hair-ink); }
+  .type-row{ display: grid; grid-template-columns: 220px 1fr 200px; gap: 24px; padding: 24px 0; border-bottom: var(--hair); align-items: center; }
+  .type-row .what{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .type-row .what strong{ color: var(--ink); display:block; font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+  .type-row .spec{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--muted); text-align: right; text-transform: uppercase; }
+
+  /* motifs */
+  .motifs{ display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+  .motif{
+    border: var(--hair); border-radius: var(--r-card); background: var(--paper);
+    padding: 18px; position: relative; min-height: 180px;
+    display:flex; flex-direction: column; justify-content: space-between;
+  }
+  .motif .tag{ font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .motif .nm{ font-size: 14px; font-weight: 600; }
+  .motif .demo{ flex: 1; display:flex; align-items: center; justify-content: center; }
+
+  /* mock UI shell */
+  .mock{
+    border: 1px solid var(--carbon);
+    border-radius: 6px;
+    background: var(--bone);
+    overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgba(20,18,12,0.25), 0 8px 20px -10px rgba(20,18,12,0.18);
+  }
+  .mock .chrome{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: var(--hair);
+    font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--paper);
+  }
+  .mock .chrome .dots{ display:flex; gap: 6px; }
+  .mock .chrome .dots span{ width: 9px; height: 9px; border-radius: 50%; background: var(--hairline); display:inline-block; }
+  .mock .chrome .url{ color: var(--muted); flex: 1; text-align: center; }
+
+  .mock-app{ display: grid; grid-template-columns: 200px 1fr; }
+  .mock-app .side{
+    border-right: var(--hair); padding: 18px 14px; min-height: 720px;
+    background: var(--bone);
+  }
+  .mock-app .side .brand{ font-weight: 600; font-size: 15px; letter-spacing: -0.01em; display:flex; gap:8px; align-items:center; }
+  .mock-app .side .brand .dot{ width:9px; height:9px; border-radius:50%; background: var(--crimson); }
+  .mock-app .side nav{ display:flex; flex-direction: column; gap: 4px; margin-top: 28px; }
+  .mock-app .side nav a{
+    text-decoration: none; padding: 7px 10px; border-radius: 3px; font-size: 13.5px;
+    color: var(--carbon); display:flex; justify-content: space-between; align-items: center;
+  }
+  .mock-app .side nav a .num{ font-family: var(--f-mono); font-size: 10px; color: var(--muted); }
+  .mock-app .side nav a.active{ background: var(--ink); color: var(--bone); }
+  .mock-app .side nav a.active .num{ color: var(--muted-2); }
+  .mock-app .side .side-foot{ position: relative; margin-top: 60px; padding-top: 16px; border-top: var(--hair); font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.6; }
+
+  .mock-app .main{ padding: 0; background: var(--bone); }
+  .app-top{
+    display:flex; justify-content: space-between; align-items: center;
+    padding: 14px 24px; border-bottom: var(--hair);
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .app-top .crumb{ color: var(--ink); }
+  .app-top .crumb em{ font-family: var(--f-serif); font-style: italic; color: var(--crimson); font-size: 13px; }
+  .app-top .right{ display:flex; gap: 16px; align-items: center; }
+
+  .app-title{
+    padding: 28px 24px 18px;
+    display: flex; justify-content: space-between; align-items: end; gap: 24px;
+    border-bottom: var(--hair);
+  }
+  .app-title h1{ margin: 0; font-size: 56px; line-height: 0.95; letter-spacing: -0.03em; font-weight: 600; }
+  .app-title h1 em{ font-family: var(--f-serif); font-style: italic; font-weight: 400; color: var(--crimson); }
+  .app-title .meta{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: right; }
+
+  /* stat grid */
+  .stat-row{ display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: var(--hair); }
+  .stat-cell{ padding: 22px 24px; border-right: var(--hair); position: relative; }
+  .stat-cell:last-child{ border-right: 0; }
+  .stat-cell .label{ display:flex; justify-content: space-between; }
+  .stat-cell .v{ font-family: var(--f-sans); font-size: 40px; font-weight: 500; letter-spacing: -0.025em; margin-top: 18px; line-height: 1; }
+  .stat-cell .v small{ font-family: var(--f-mono); font-size: 13px; color: var(--muted); margin-left: 4px; letter-spacing: 0.02em; font-weight: 400; }
+  .stat-cell .delta{ font-family: var(--f-mono); font-size: 11px; margin-top: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .delta.up{ color: var(--field); }
+  .delta.down{ color: var(--crimson); }
+
+  /* dashboard grid */
+  .dash-grid{ display: grid; grid-template-columns: 1.6fr 1fr; gap: 0; }
+  .panel{ border-right: var(--hair); border-bottom: var(--hair); padding: 22px 24px; }
+  .panel:last-child{ border-right: 0; }
+  .panel .p-head{ display:flex; justify-content: space-between; align-items: end; padding-bottom: 14px; border-bottom: var(--hair); }
+  .panel .p-head h3{ margin: 0; font-size: 14px; font-family: var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+  .panel .p-head .meta{ font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+  .panel .p-body{ padding-top: 18px; }
+
+  /* recent rides table */
+  table.rides{ width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.rides th{ text-align: left; font-family: var(--f-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; padding: 10px 8px 8px; border-bottom: var(--hair); }
+  table.rides td{ padding: 12px 8px; border-bottom: var(--hair); vertical-align: middle; }
+  table.rides td.num, table.rides th.num{ font-family: var(--f-mono); text-align: right; }
+  table.rides td .ix{ font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
+  table.rides td .ti{ font-weight: 500; letter-spacing: -0.005em; }
+  table.rides td .sub{ color: var(--muted); font-size: 12px; }
+  table.rides tr:hover td{ background: var(--paper); }
+  table.rides td .glyph{ width: 36px; height: 18px; display:inline-block; }
+
+  /* chart shells */
+  .chart{ width: 100%; height: 220px; }
+  .chart-elev{ height: 180px; }
+  .chart-bars{ height: 200px; }
+
+  /* progress dial */
+  .dial{ display: flex; gap: 18px; align-items: center; }
+  .dial svg{ width: 96px; height: 96px; }
+  .dial .num{ font-family: var(--f-sans); font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+  .dial .lab{ font-family: var(--f-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+  /* map */
+  .map{
+    background:
+      radial-gradient(900px 500px at 30% 30%, #ECE4D2 0%, transparent 60%),
+      radial-gradient(700px 380px at 70% 70%, #E2D9C2 0%, transparent 60%),
+      var(--bone-2);
+    position: relative; overflow: hidden;
+    border-bottom: var(--hair);
+  }
+  .map svg{ width: 100%; height: 100%; display: block; }
+
+  /* buttons */
+  .btn{
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 16px; border: 1px solid var(--ink); border-radius: var(--r-btn);
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; background: transparent; color: var(--ink); text-decoration: none;
+    transition: all .15s ease;
+  }
+  .btn:hover{ background: var(--ink); color: var(--bone); }
+  .btn.solid{ background: var(--ink); color: var(--bone); }
+  .btn.solid:hover{ background: var(--crimson); border-color: var(--crimson); }
+  .btn.crimson{ background: var(--crimson); color: var(--bone); border-color: var(--crimson); }
+  .btn.crimson:hover{ background: var(--crimson-ink); border-color: var(--crimson-ink); }
+  .btn.ghost{ border-color: var(--hairline); color: var(--carbon); }
+
+  /* misc */
+  .ix-pill{ display:inline-flex; gap: 6px; align-items: center; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .bracket{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .bracket b{ color: var(--ink); font-weight: 500; }
+  .star{ color: var(--crimson); }
+
+  /* upload */
+  .upload-grid{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
+  .upload-state{ border: var(--hair); border-radius: var(--r-card); background: var(--paper); overflow: hidden; min-height: 360px; display:flex; flex-direction: column; }
+  .upload-state .top{ padding: 12px 14px; border-bottom: var(--hair); display:flex; justify-content: space-between; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .upload-state .top .nm{ color: var(--ink); }
+  .upload-state .body{ padding: 24px; flex: 1; display:flex; flex-direction: column; gap: 14px; }
+  .dropzone{
+    flex: 1; border: 1.5px dashed var(--hairline); border-radius: 6px; padding: 18px;
+    display:flex; align-items: center; justify-content: center; text-align: center;
+    background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(193,53,37,0.04) 8px 9px);
+    color: var(--muted);
+  }
+  .dropzone.active{ border-color: var(--ink); background: rgba(193,53,37,0.06); color: var(--ink); }
+
+  /* activity detail */
+  .activity{ border: 1px solid var(--carbon); border-radius: 6px; background: var(--bone); overflow: hidden; }
+  .activity .head{
+    display: grid; grid-template-columns: 90px 1fr 1fr 1fr; gap: 0;
+    border-bottom: var(--hair);
+  }
+  .activity .head > div{ border-right: var(--hair); padding: 18px 20px; }
+  .activity .head > div:last-child{ border-right: 0; }
+  .activity .head .ix{ font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .activity .head h1{ margin: 0; font-size: 36px; letter-spacing: -0.025em; line-height: 1; font-weight: 600; }
+  .activity .head h1 em{ font-family: var(--f-serif); font-style: italic; font-weight: 400; color: var(--crimson); }
+  .activity .head .meta-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .activity .head .meta-grid .k{ color: var(--muted); }
+  .activity .head .meta-grid .v{ color: var(--ink); font-size: 12px; }
+
+  /* footer */
+  .colofon{
+    margin-top: 120px; padding: 36px 0; border-top: var(--hair-ink);
+    display: flex; justify-content: space-between; align-items: end;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  }
+  .colofon .big{ font-family: var(--f-sans); font-size: 64px; letter-spacing: -0.03em; color: var(--ink); font-weight: 600; line-height: 0.9; }
+  .colofon .big em{ font-family: var(--f-serif); font-style: italic; color: var(--crimson); font-weight: 400; }
+
+  /* utilities */
+  .gap-12{ display:grid; gap: 12px; } .gap-16{ display: grid; gap: 16px; } .gap-24{ display: grid; gap: 24px; }
+  .center{ display:flex; align-items:center; justify-content:center; }
+  hr.hair{ border:0; border-top: var(--hair); margin: 16px 0; }
+  .pill{ display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: var(--hair); border-radius: var(--r-pill); font-family: var(--f-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pill.crimson{ background: var(--crimson); color: var(--bone); border-color: var(--crimson); }
+  .pill.ink{ background: var(--ink); color: var(--bone); border-color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a class="brand-mark" href="#top"><span class="dot"></span> Kadence&nbsp;<span class="num">/ design spec v0.1</span></a>
+  <nav>
+    <a href="#dna">[DNA]</a>
+    <a href="#brand">[BRAND]</a>
+    <a href="#color">[COLOR]</a>
+    <a href="#type">[TYPE]</a>
+    <a href="#layout">[LAYOUT]</a>
+    <a href="#motifs">[MOTIFS]</a>
+    <a href="#screens">[SCREENS ↓]</a>
+    <a href="#viz">[VIZ]</a>
+    <a href="#motion">[MOTION]</a>
+    <a href="#handoff">[HANDOFF]</a>
+  </nav>
+  <span class="clock"><span class="num" id="clock">00:00:00</span> &nbsp;©2026</span>
+</header>
+
+<!-- HERO -->
+<section class="doc" id="top">
+  <div class="hero">
+    <div class="bracket" style="display:flex; justify-content:space-between; padding-bottom: 32px;">
+      <span>[ 00 ] &nbsp;Cover</span>
+      <span>Design&nbsp;spec / Kadence — a GPX cycling analytics product</span>
+      <span>For Claude Code &nbsp;[ → ]</span>
+    </div>
+    <h1 class="display">
+      Ride<br>
+      data, <em>composed.</em>
+    </h1>
+    <div class="hero-meta">
+      <div>
+        <div class="label">A product by</div>
+        <div class="body-lg" style="margin-top: 6px;">An original GPX-based cycling analytics app — uploads in, premium private dashboard out. Built for riders who track everything and want it presented like it matters.</div>
+      </div>
+      <div>
+        <div class="label">Brief</div>
+        <div class="small" style="margin-top: 6px;">Editorial · Analytical · Energetic. Visual lineage from <em class="serif">hellohello.is</em>, <em class="serif">outfit.hellohello.is</em>, and <em class="serif">marinkurir.com</em> — never a Strava clone.</div>
+      </div>
+      <div>
+        <div class="label">Spec contents</div>
+        <div class="small" style="margin-top: 6px;">13 sections · brand, system, screens, viz, motion, handoff. Mockups are live HTML — not screenshots.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span>
+      <span>KADENCE</span><span class="star">✱</span><span>v0.1 DESIGN SPEC</span><span class="star">✱</span>
+      <span>UPLOAD&nbsp;·&nbsp;ANALYZE&nbsp;·&nbsp;ARCHIVE</span><span class="star">✱</span>
+      <span>GPX-NATIVE</span><span class="star">✱</span><span>WATTS · METRES · MINUTES</span><span class="star">✱</span>
+      <span>FOR THE QUIET KIND OF RIDER</span><span class="star">✱</span>
+      <span>EST. 2026 · MONTEVIDEO ↔ EVERYWHERE</span><span class="star">✱</span>
+    </span>
+    <span aria-hidden="true">
+      <span>KADENCE</span><span class="star">✱</span><span>v0.1 DESIGN SPEC</span><span class="star">✱</span>
+      <span>UPLOAD&nbsp;·&nbsp;ANALYZE&nbsp;·&nbsp;ARCHIVE</span><span class="star">✱</span>
+      <span>GPX-NATIVE</span><span class="star">✱</span><span>WATTS · METRES · MINUTES</span><span class="star">✱</span>
+      <span>FOR THE QUIET KIND OF RIDER</span><span class="star">✱</span>
+      <span>EST. 2026 · MONTEVIDEO ↔ EVERYWHERE</span><span class="star">✱</span>
+    </span>
+  </div>
+</div>
+
+<div class="doc">
+
+<!-- SECTION 01 — VISUAL DNA -->
+<section class="sec" id="dna">
+  <div class="sec-head">
+    <div class="ix">[ 01 ]<br><span style="color:var(--muted)">DNA</span></div>
+    <h2>Reading the<br>references <em>first.</em></h2>
+    <div class="desc body">Three sites. Three different jobs. Before any pixels go down for Kadence, here is exactly what I'm stealing — and what I'm leaving behind so this product reads as its own thing, not a remix.</div>
+  </div>
+  <div class="sec-body">
+    <div class="dna">
+
+      <article class="dna-card">
+        <div class="tag">[ 01-A ] &nbsp;hellohello.is</div>
+        <h4>Studio confidence — warm, indexed, conversational.</h4>
+        <ul>
+          <li><span class="k">take</span><span>Bone/cream paper background with rich warm ink. Bold sans display set tight. Numbered list rhythm: (1), (2), (3).</span></li>
+          <li><span class="k">take</span><span>Section labels that read like signage. Big questions, short answers. Lots of air between blocks.</span></li>
+          <li><span class="k">take</span><span>The whole color world — cream, ink, a single hot accent — becomes Kadence's main palette.</span></li>
+          <li><span class="k">leave</span><span>Studio bio copy, the global clock-row chrome, multilingual hello.</span></li>
+        </ul>
+      </article>
+
+      <article class="dna-card">
+        <div class="tag">[ 01-B ] &nbsp;outfit.hellohello.is</div>
+        <h4>Boutique inventory — index, label, breathe.</h4>
+        <ul>
+          <li><span class="k">take</span><span>Tight product grid energy: small monospace metadata, big quiet imagery, page counters like 000 / 014.</span></li>
+          <li><span class="k">take</span><span>Compact metric labels above big values. Same pattern reads beautifully on stat cards.</span></li>
+          <li><span class="k">take</span><span>Strong whitespace as a feature, not as filler. Single-line nav.</span></li>
+          <li><span class="k">leave</span><span>E-commerce affordances, cart, sizing, anything store-specific.</span></li>
+        </ul>
+      </article>
+
+      <article class="dna-card">
+        <div class="tag">[ 01-C ] &nbsp;marinkurir.com</div>
+        <h4>Personal portfolio energy — playful, indexed, kinetic.</h4>
+        <ul>
+          <li><span class="k">take</span><span>Massive uppercase display with asterisk separators: <span class="num">MARIN ✱ DIGITAL DESIGNER ✱</span>. Bracketed nav: [ABOUT], [WORK ↓].</span></li>
+          <li><span class="k">take</span><span>Indexed case study moments: [00-1], [00-2]. Ticker rows. Tiny labels under huge type.</span></li>
+          <li><span class="k">take</span><span>The italic-serif accent as a typographic "wink" against the dominant sans.</span></li>
+          <li><span class="k">leave</span><span>Personal-portfolio tone, emoji smiley, anything that reads as one-person blog.</span></li>
+        </ul>
+      </article>
+
+    </div>
+
+    <div class="frame" style="margin-top: 32px;">
+      <div class="frame-h"><span>[ 01-D ] &nbsp;The translation</span><span>Editorial → Analytical</span></div>
+      <div class="frame-b">
+        <p class="body-lg" style="margin: 0 0 14px; max-width: 1050px;">
+          The hard part is that these references are all <em class="serif">presentational</em> — portfolios and storefronts. Kadence is a <em class="serif">working tool</em>: dense, queryable, live with data. So the recipe is to keep the editorial bones — bone paper, monospace labels, ticker chrome, indexed sections, one italic-serif accent — and let the working surfaces (tables, charts, maps) inherit the typographic discipline rather than the layout drama.
+        </p>
+        <p class="small" style="margin:0; max-width: 1050px;">
+          In practice: <b>headers</b> are loud and editorial, <b>data</b> is quiet and uniform. The interesting visual moments live at the seams — a marquee at the top of the upload screen, a bracket-labeled climb in an activity, an indexed ride card in the dashboard. Never on the chart itself.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 02 — BRAND -->
+<section class="sec" id="brand">
+  <div class="sec-head">
+    <div class="ix">[ 02 ]<br><span style="color:var(--muted)">BRAND</span></div>
+    <h2>A name, then a<br><em>posture.</em></h2>
+    <div class="desc body">Five candidates, ranked. The lead — <b>Kadence</b> — is rhythmic, analytical, and lives one letter away from the cycling term every rider already knows.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="names">
+      <div class="name-row picked">
+        <div class="ix">[ 00-1 ] ★</div>
+        <div class="nm">Kadence<em>.</em></div>
+        <div class="why">Cadence with a K — rhythm, repetition, training tempo. Reads as a measurement and as a word. Searchable, trademark-friendly, looks confident in editorial display.</div>
+        <div class="stat">Pick &nbsp;·&nbsp; <strong>1st</strong></div>
+      </div>
+      <div class="name-row">
+        <div class="ix">[ 00-2 ]</div>
+        <div class="nm">Azimuth</div>
+        <div class="why">Compass bearing. Technical, navigational, slightly archaic in a good way. Strong for maps and route work.</div>
+        <div class="stat">Alt &nbsp;·&nbsp; navigation</div>
+      </div>
+      <div class="name-row">
+        <div class="ix">[ 00-3 ]</div>
+        <div class="nm">Draftline</div>
+        <div class="why">Racing reference (drafting), plus "draft" as record/manuscript. Editorial-friendly compound.</div>
+        <div class="stat">Alt &nbsp;·&nbsp; racing</div>
+      </div>
+      <div class="name-row">
+        <div class="ix">[ 00-4 ]</div>
+        <div class="nm">Ridgeline</div>
+        <div class="why">The outdoor read — climbs, elevation profile, terrain. Pretty, slightly hike-coded.</div>
+        <div class="stat">Alt &nbsp;·&nbsp; terrain</div>
+      </div>
+      <div class="name-row">
+        <div class="ix">[ 00-5 ]</div>
+        <div class="nm">Waypoint</div>
+        <div class="why">GPS-native. Functional, neutral, slightly tactical. Easiest to logo, easiest to ignore.</div>
+        <div class="stat">Alt &nbsp;·&nbsp; gps</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: 56px;">
+      <div class="span-4">
+        <div class="label">Brand idea</div>
+        <div class="body-lg" style="margin-top: 10px;">An editorial archive for your own riding. A private newsroom for a one-rider beat: <em class="serif">every ride a published piece, every metric quotable.</em></div>
+      </div>
+      <div class="span-4">
+        <div class="label">Tone of voice</div>
+        <ul class="body" style="margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px;">
+          <li><span class="num" style="color:var(--muted)">—</span> Calm, factual, lightly opinionated. No hype.</li>
+          <li><span class="num" style="color:var(--muted)">—</span> Measurements first ("184 W avg, 11 splits"), feelings second.</li>
+          <li><span class="num" style="color:var(--muted)">—</span> Loves brackets, ticker phrases, indexes — sparing.</li>
+          <li><span class="num" style="color:var(--muted)">—</span> Never gamified, never social, never leaderboard-led.</li>
+        </ul>
+      </div>
+      <div class="span-4">
+        <div class="label">Visual keywords</div>
+        <div class="body" style="margin-top: 10px; display:flex; flex-wrap: wrap; gap: 8px;">
+          <span class="pill">Bone &amp; ink</span>
+          <span class="pill">Editorial sans</span>
+          <span class="pill">Italic serif accents</span>
+          <span class="pill">Monospace labels</span>
+          <span class="pill">Bracketed nav</span>
+          <span class="pill">Ticker rhythm</span>
+          <span class="pill">Topographic line</span>
+          <span class="pill">Hairline rules</span>
+          <span class="pill crimson">One hot accent</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame" style="margin-top: 40px;">
+      <div class="frame-h"><span>[ 02-D ] &nbsp;What the app should feel like</span><span>One sentence</span></div>
+      <div class="frame-b">
+        <div class="display" style="font-size: clamp(40px, 5vw, 84px); line-height: 0.95; letter-spacing: -0.035em; max-width: 1100px;">
+          Like opening a <em class="serif">quietly designed magazine</em> about the ride you did this morning — and finding it already laid out, indexed and proofed.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /doc -->
+
+<!-- SECTION 03 — COLOR -->
+<div class="doc">
+<section class="sec" id="color">
+  <div class="sec-head">
+    <div class="ix">[ 03 ]<br><span style="color:var(--muted)">COLOR</span></div>
+    <h2>A palette derived,<br>not <em>borrowed.</em></h2>
+    <div class="desc body">hellohello's color world reads as <em class="serif">paper, ink, one hot.</em> Kadence keeps that ratio but tunes the hot to a deeper, drier red that won't be confused with any orange-led competitor — and adds a small data-viz quartet for charts and route work.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="swatches">
+      <div class="sw">
+        <div class="chip" style="background: var(--bone);"></div>
+        <div class="meta"><div class="nm">Bone</div><div class="hex">#F8F6F1</div><div class="role">Background · default</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--paper);"></div>
+        <div class="meta"><div class="nm">Paper</div><div class="hex">#FCFAF5</div><div class="role">Surfaces · cards</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--bone-2);"></div>
+        <div class="meta"><div class="nm">Sand</div><div class="hex">#EDE9DF</div><div class="role">Map base · hover</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--hairline);"></div>
+        <div class="meta"><div class="nm">Hairline</div><div class="hex">#C9C1B0</div><div class="role">Borders · rules</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--muted);"></div>
+        <div class="meta"><div class="nm">Stone</div><div class="hex">#8C8678</div><div class="role">Muted text · labels</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--carbon);"></div>
+        <div class="meta" style="color: var(--bone); background: var(--carbon); border-top: 1px solid #3A3830;"><div class="nm">Carbon</div><div class="hex" style="color: var(--muted-2);">#2A2823</div><div class="role" style="color: var(--muted-2);">Secondary text</div></div>
+      </div>
+
+      <div class="sw">
+        <div class="chip" style="background: var(--ink);"></div>
+        <div class="meta" style="color: var(--bone); background: var(--ink);"><div class="nm">Ink</div><div class="hex" style="color: var(--muted-2);">#15140F</div><div class="role" style="color: var(--muted-2);">Primary text · CTA</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--crimson);"></div>
+        <div class="meta" style="color: var(--bone); background: var(--crimson); border-top: 1px solid #A02A1F;"><div class="nm">Crimson</div><div class="hex" style="color: #F6CABF;">#C13525</div><div class="role" style="color: #F6CABF;">Signal · brand accent</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--cobalt);"></div>
+        <div class="meta" style="color: var(--bone); background: var(--cobalt);"><div class="nm">Cobalt</div><div class="hex" style="color: #BFCBED;">#2748B5</div><div class="role" style="color: #BFCBED;">Speed · data</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--field);"></div>
+        <div class="meta" style="color: var(--bone); background: var(--field);"><div class="nm">Field</div><div class="hex" style="color: #C6D3B6;">#455F2C</div><div class="role" style="color: #C6D3B6;">Success · terrain</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--sun);"></div>
+        <div class="meta"><div class="nm">Sun</div><div class="hex">#D9A12B</div><div class="role">Warning · weather</div></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background: var(--slate);"></div>
+        <div class="meta" style="color: var(--bone); background: var(--slate);"><div class="nm">Slate</div><div class="hex" style="color:#C5CFDB;">#4B5A6B</div><div class="role" style="color:#C5CFDB;">Heart rate · cool data</div></div>
+      </div>
+    </div>
+
+    <div class="palette-row">
+      <div class="mode-card light">
+        <h4>[ 03-A ] &nbsp; Light mode — default</h4>
+        <p class="body" style="margin: 0 0 28px; color: var(--carbon);">Bone paper, ink text, hairline rules. Crimson appears only as <em class="serif">signal</em>: brand, primary action, climb markers, hover edges. The cobalt/field/sun/slate quartet is reserved for charts and the route map.</p>
+        <div class="mode-strip" style="margin-bottom: 36px;">
+          <div style="background: var(--bone);"><span>Bg</span></div>
+          <div style="background: var(--paper);"><span>Surf</span></div>
+          <div style="background: var(--hairline);"><span>Line</span></div>
+          <div style="background: var(--muted);"><span>Mute</span></div>
+          <div style="background: var(--ink);"><span>Ink</span></div>
+          <div style="background: var(--crimson);"><span>Brand</span></div>
+        </div>
+        <div class="mono" style="color: var(--muted);">Contrast — Ink/Bone <b style="color:var(--ink)">16.4:1</b> · Carbon/Bone <b style="color:var(--ink)">11.2:1</b> · Crimson/Bone <b style="color:var(--ink)">5.1:1</b></div>
+      </div>
+      <div class="mode-card dark">
+        <h4>[ 03-B ] &nbsp; Dark mode — "Night ride"</h4>
+        <p class="body" style="margin: 0 0 28px; color: var(--muted-2);">A deep warm black (not pure black) preserves the editorial warmth. Crimson lifts to a brighter ember for legibility. Used as a user preference and as the default for activity detail when the map is the hero.</p>
+        <div class="mode-strip" style="margin-bottom: 36px;">
+          <div style="background: var(--night);"><span>Bg</span></div>
+          <div style="background: var(--night-2);"><span>Surf</span></div>
+          <div style="background: #2A2620;"><span>Line</span></div>
+          <div style="background: #6D6657;"><span>Mute</span></div>
+          <div style="background: var(--night-ink);"><span>Ink</span></div>
+          <div style="background: #E84A37;"><span>Brand</span></div>
+        </div>
+        <div class="mono" style="color: var(--muted-2);">Trigger — system preference, manual toggle in settings, OR auto when activity is solo-feature</div>
+      </div>
+    </div>
+
+    <div class="frame" style="margin-top: 32px;">
+      <div class="frame-h"><span>[ 03-C ] &nbsp;Data-viz quartet</span><span>For Recharts / Tremor / MapLibre</span></div>
+      <div class="frame-b">
+        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
+          <div>
+            <div style="height: 8px; background: var(--cobalt); border-radius: 2px;"></div>
+            <div class="mono" style="margin-top: 8px;"><b style="color:var(--ink)">Cobalt</b> &nbsp;Speed (km/h)</div>
+          </div>
+          <div>
+            <div style="height: 8px; background: var(--crimson); border-radius: 2px;"></div>
+            <div class="mono" style="margin-top: 8px;"><b style="color:var(--ink)">Crimson</b> &nbsp;Heart rate (bpm)</div>
+          </div>
+          <div>
+            <div style="height: 8px; background: var(--field); border-radius: 2px;"></div>
+            <div class="mono" style="margin-top: 8px;"><b style="color:var(--ink)">Field</b> &nbsp;Elevation (m)</div>
+          </div>
+          <div>
+            <div style="height: 8px; background: var(--sun); border-radius: 2px;"></div>
+            <div class="mono" style="margin-top: 8px;"><b style="color:var(--ink)">Sun</b> &nbsp;Power (W)</div>
+          </div>
+          <div>
+            <div style="height: 8px; background: var(--slate); border-radius: 2px;"></div>
+            <div class="mono" style="margin-top: 8px;"><b style="color:var(--ink)">Slate</b> &nbsp;Cadence (rpm)</div>
+          </div>
+        </div>
+        <p class="small" style="margin: 22px 0 0; color: var(--carbon);">Each metric is locked to one hue across the entire product so users learn it once. Maps use ink for the route line, crimson for selected segment, sun for climb tops, hairline for sand-base terrain. Never combine more than three chart hues on a single surface.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="doc">
+<section class="sec" id="type">
+  <div class="sec-head">
+    <div class="ix">[ 04 ]<br><span style="color:var(--muted)">TYPE</span></div>
+    <h2>Three voices.<br>One <em>conversation.</em></h2>
+    <div class="desc body">A bold sans for everything structural, an italic serif as the editorial wink, a mono for labels and data. All three are free, available on Google Fonts, and pair without fighting.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="row" style="gap: 24px;">
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 04-A ] &nbsp;Display / UI</span><span>Space Grotesk</span></div>
+        <div class="frame-b" style="padding: 28px;">
+          <div style="font-size: 88px; line-height: 0.9; letter-spacing: -0.035em; font-weight: 600;">Aa</div>
+          <div style="margin-top: 16px; font-size: 18px; letter-spacing: -0.005em;">The quick brown rider climbs over twelve switchbacks at 03:42.</div>
+          <hr class="hair" />
+          <div class="mono" style="color: var(--muted);">Use for — headings, stat values, body, buttons. 400 / 500 / 600 / 700.</div>
+        </div>
+      </div>
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 04-B ] &nbsp;Editorial accent</span><span>Instrument Serif Italic</span></div>
+        <div class="frame-b" style="padding: 28px;">
+          <div style="font-family: var(--f-serif); font-style: italic; font-size: 96px; line-height: 0.9; letter-spacing: -0.02em; color: var(--crimson);">Aa</div>
+          <div style="margin-top: 16px; font-size: 22px; font-family: var(--f-serif); font-style: italic; letter-spacing: -0.005em;">the quietly designed magazine about your morning.</div>
+          <hr class="hair" />
+          <div class="mono" style="color: var(--muted);">Use for — display accents, em phrases, never UI body. Italic only.</div>
+        </div>
+      </div>
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 04-C ] &nbsp;Data / labels</span><span>JetBrains Mono</span></div>
+        <div class="frame-b" style="padding: 28px;">
+          <div style="font-family: var(--f-mono); font-size: 88px; line-height: 0.9; font-weight: 500;">Aa</div>
+          <div style="margin-top: 16px; font-family: var(--f-mono); font-size: 14px; letter-spacing: 0.04em;">42.8 KM · 1:47:12 · 184 W AVG · 612 M ↑</div>
+          <hr class="hair" />
+          <div class="mono" style="color: var(--muted);">Use for — labels, brackets, indexes, table data, axis ticks. 400 / 500.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="type-spec" style="margin-top: 48px;">
+      <div class="type-row">
+        <div class="what"><strong>Display hero</strong>Section, landing, full-page moment</div>
+        <div style="font-size: 120px; line-height: 0.85; letter-spacing: -0.045em; font-weight: 600;">Ride, <em class="serif" style="color:var(--crimson); font-weight: 400;">composed.</em></div>
+        <div class="spec">120 / 0.85 / -0.045em<br>Space Grotesk 600 + Instrument Serif Italic</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Section title</strong>Index sections, page titles</div>
+        <div style="font-size: 56px; line-height: 0.95; letter-spacing: -0.03em; font-weight: 600;">Recent rides.</div>
+        <div class="spec">56 / 0.95 / -0.03em<br>Space Grotesk 600</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Card title</strong>Inside panels, ride cards</div>
+        <div style="font-size: 22px; line-height: 1.15; letter-spacing: -0.015em; font-weight: 600;">Tuesday hill loop with two cafés.</div>
+        <div class="spec">22 / 1.15 / -0.015em<br>Space Grotesk 600</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Stat value</strong>Numbers in stat cards, dashboard</div>
+        <div style="font-size: 44px; line-height: 1; letter-spacing: -0.025em; font-weight: 500;">42.8&nbsp;<small style="font-family: var(--f-mono); font-size: 14px; color: var(--muted); letter-spacing: 0.02em; font-weight: 400;">km</small></div>
+        <div class="spec">44 / 1 / -0.025em<br>Space Grotesk 500 + Mono unit 14</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Body</strong>Paragraphs, descriptions</div>
+        <div style="font-size: 16px; line-height: 1.5;">A quiet 42.8 km north of the city — two cafés, a tailwind on the return, and the steepest 60-second effort of the month at kilometre 31.</div>
+        <div class="spec">16 / 1.5 / 0em<br>Space Grotesk 400</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Label · mono</strong>Section labels, index brackets, axes</div>
+        <div class="mono" style="font-size: 12px;">[ 03-B ] &nbsp;ELEVATION GAIN &nbsp;·&nbsp; KM 0 – 42.8</div>
+        <div class="spec">11 – 13 / 1.4 / +0.06em<br>JetBrains Mono 500, UPPERCASE</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Table cell</strong>Recent rides, splits, history</div>
+        <div style="font-size: 14px; line-height: 1.5;">Tuesday hill loop &nbsp;·&nbsp; <span class="num">42.8</span> &nbsp;·&nbsp; <span class="num">1:47:12</span></div>
+        <div class="spec">13 – 14 / 1.5 / 0em<br>Sans names, Mono numbers</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Button</strong>Pill, ghost, solid</div>
+        <div><a class="btn solid" href="#">Upload GPX → </a> &nbsp; <a class="btn" href="#">Open ride</a> &nbsp; <a class="btn ghost" href="#">Cancel</a></div>
+        <div class="spec">11 / 1 / +0.08em<br>JetBrains Mono 500, UPPERCASE</div>
+      </div>
+      <div class="type-row">
+        <div class="what"><strong>Chart label</strong>Tick, legend, tooltip header</div>
+        <div class="mono" style="font-size: 10.5px;">KM 0 &nbsp;·&nbsp; KM 10 &nbsp;·&nbsp; KM 20 &nbsp;·&nbsp; KM 30 &nbsp;·&nbsp; KM 42.8</div>
+        <div class="spec">10 – 11 / 1.2 / +0.06em<br>JetBrains Mono 400</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 05 — LAYOUT -->
+<div class="doc">
+<section class="sec" id="layout">
+  <div class="sec-head">
+    <div class="ix">[ 05 ]<br><span style="color:var(--muted)">LAYOUT</span></div>
+    <h2>Editorial bones,<br>dashboard <em>discipline.</em></h2>
+    <div class="desc body">A 12-column grid for editorial surfaces (landing, settings, trends), a denser <span class="num">4×N</span> stat grid for working surfaces (dashboard, activity). Borders carry the weight — radii are minimal and shadows are rare.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="row" style="gap: 24px;">
+      <div class="span-7 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 05-A ] &nbsp;Grid &amp; gutters</span><span>1480 max · 12 col · 24 gutter · 56 margin</span></div>
+        <div class="frame-b">
+          <div style="background:
+            repeating-linear-gradient(to right, rgba(193,53,37,0.10) 0 calc((100% - 11*24px)/12), transparent 0 calc((100% - 11*24px)/12 + 24px));
+            background-size: calc(100% / 1) 100%;
+            height: 220px; border: var(--hair); border-radius: 2px; position: relative;">
+            <div style="position:absolute; left: 0; top: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px;">
+              <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+            </div>
+            <div style="position:absolute; left: 12px; bottom: 12px;" class="mono">12 col · 24px gutter</div>
+          </div>
+          <div class="mono" style="margin-top: 16px; color: var(--muted);">Editorial pages — landing, trends, settings — use the 12-column directly. Dashboard packs stats into a denser 4×N over the same grid.</div>
+        </div>
+      </div>
+
+      <div class="span-5 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 05-B ] &nbsp;Spacing scale</span><span>4-base</span></div>
+        <div class="frame-b">
+          <div style="display:grid; grid-template-columns: 56px 1fr; gap: 8px 16px; align-items: center;">
+            <div class="mono">4</div><div style="height: 4px; background: var(--ink);"></div>
+            <div class="mono">8</div><div style="height: 8px; background: var(--ink);"></div>
+            <div class="mono">12</div><div style="height: 12px; background: var(--ink);"></div>
+            <div class="mono">16</div><div style="height: 16px; background: var(--ink);"></div>
+            <div class="mono">24</div><div style="height: 24px; background: var(--ink);"></div>
+            <div class="mono">32</div><div style="height: 32px; background: var(--ink);"></div>
+            <div class="mono">56</div><div style="height: 56px; background: var(--ink);"></div>
+            <div class="mono">96</div><div style="height: 96px; background: var(--ink);"></div>
+          </div>
+          <div class="mono" style="margin-top: 14px; color: var(--muted);">In Tailwind — use 1, 2, 3, 4, 6, 8, 14, 24. No half-steps.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" style="gap: 24px; margin-top: 24px;">
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 05-C ] &nbsp;Radii</span><span>Sharp by default</span></div>
+        <div class="frame-b" style="display:flex; gap: 16px; align-items: flex-end;">
+          <div style="text-align:center;">
+            <div style="width: 64px; height: 64px; background: var(--ink); border-radius: 0;"></div>
+            <div class="mono" style="margin-top: 6px; color: var(--muted);">0 · rules</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="width: 64px; height: 64px; background: var(--ink); border-radius: 2px;"></div>
+            <div class="mono" style="margin-top: 6px; color: var(--muted);">2 · cells</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="width: 64px; height: 64px; background: var(--ink); border-radius: 4px;"></div>
+            <div class="mono" style="margin-top: 6px; color: var(--muted);">4 · cards</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="width: 64px; height: 64px; background: var(--ink); border-radius: 6px;"></div>
+            <div class="mono" style="margin-top: 6px; color: var(--muted);">6 · windows</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="width: 96px; height: 32px; background: var(--ink); border-radius: 999px;"></div>
+            <div class="mono" style="margin-top: 6px; color: var(--muted);">∞ · pills only</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 05-D ] &nbsp;Borders &amp; rules</span><span>Hairlines do the work</span></div>
+        <div class="frame-b">
+          <div style="border: 1px solid var(--hairline); padding: 12px; border-radius: 4px;">Default — 1px hairline</div>
+          <div style="border: 1px solid var(--ink); padding: 12px; border-radius: 4px; margin-top: 10px;">Emphasis — 1px ink (mocks, focus)</div>
+          <div style="border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 12px; margin-top: 10px;">Ticker — top + bottom ink rule</div>
+          <div style="border: 1.5px dashed var(--hairline); padding: 12px; margin-top: 10px; border-radius: 4px;">Dropzone — dashed hairline</div>
+        </div>
+      </div>
+
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 05-E ] &nbsp;Density</span><span>Dashboard vs editorial</span></div>
+        <div class="frame-b">
+          <p class="body" style="margin: 0 0 12px;">Two densities, switched per surface:</p>
+          <div style="display:grid; gap: 10px;">
+            <div style="border: var(--hair); padding: 10px 12px; border-radius: 3px;"><span class="mono">EDITORIAL</span> — 56 / 96 / 120 vertical rhythm, generous air, 1 idea per row.</div>
+            <div style="border: var(--hair); padding: 10px 12px; border-radius: 3px; background: var(--bone-2);"><span class="mono">WORKING</span> — 12 / 16 / 24 vertical rhythm, 4-up stat rows, 8 visible rides at a glance.</div>
+          </div>
+          <p class="small" style="margin: 14px 0 0; color: var(--carbon);">Rule of thumb — if it's a single ride, lean editorial. If it's a comparison or list, lean working.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame" style="margin-top: 24px;">
+      <div class="frame-h"><span>[ 05-F ] &nbsp;How editorial &amp; dashboard meet</span><span>The Kadence trick</span></div>
+      <div class="frame-b">
+        <div class="row" style="grid-template-columns: 1fr 1fr; gap: 32px;">
+          <div>
+            <p class="body" style="margin: 0;">Every dashboard page opens with one editorial moment — a bracketed index, a marquee, or a giant display title — that <em class="serif">claims the space.</em> Below it, work happens at working density. The reader gets the postcard before the spreadsheet.</p>
+          </div>
+          <div class="mono" style="color: var(--muted); line-height: 1.7;">
+            HEADER  →  editorial · 56–120 type · single line<br>
+            METRICS →  working · 4-up grid · mono numbers<br>
+            CONTENT →  working · tables, charts, panels<br>
+            FOOTER  →  editorial · ticker or colofon
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 06 — MOTIFS -->
+<div class="doc">
+<section class="sec" id="motifs">
+  <div class="sec-head">
+    <div class="ix">[ 06 ]<br><span style="color:var(--muted)">MOTIFS</span></div>
+    <h2>Small reusable<br><em>tells.</em></h2>
+    <div class="desc body">Ten product-specific marks that, repeated across screens, give Kadence its identity. Each is a couple of lines of HTML/SVG — cheap to ship, expensive to fake.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="motifs">
+
+      <div class="motif span-3">
+        <div class="tag">[ M-01 ]</div>
+        <div class="demo">
+          <svg viewBox="0 0 220 80" width="100%" style="max-width: 240px;">
+            <path d="M 4 60 Q 30 50 50 56 T 92 30 T 140 40 T 184 18 T 216 28" stroke="#15140F" fill="none" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="4" cy="60" r="4" fill="#15140F"/>
+            <circle cx="216" cy="28" r="4" fill="#C13525"/>
+            <text x="4" y="76" font-family="JetBrains Mono" font-size="9" fill="#8C8678">START · 00:00</text>
+            <text x="170" y="76" font-family="JetBrains Mono" font-size="9" fill="#C13525">END · 42.8K</text>
+          </svg>
+        </div>
+        <div class="nm">Route-line glyph</div>
+        <div class="tag">A single SVG path. Reused everywhere.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-02 ]</div>
+        <div class="demo">
+          <div style="text-align:center;">
+            <div class="mono" style="font-size: 14px; color: var(--ink);">−34.9011° &nbsp;/&nbsp; −56.1645°</div>
+            <div class="mono" style="font-size: 10px; color: var(--muted); margin-top: 6px;">START · MONTEVIDEO RAMBLA</div>
+          </div>
+        </div>
+        <div class="nm">GPS coordinate label</div>
+        <div class="tag">Mono lat/lng under any map or ride.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-03 ]</div>
+        <div class="demo">
+          <div style="display:grid; gap: 6px;">
+            <div class="mono"><span style="color: var(--muted);">[</span> 00-1 <span style="color: var(--muted);">]</span> &nbsp;Tuesday hill loop</div>
+            <div class="mono"><span style="color: var(--muted);">[</span> 00-2 <span style="color: var(--muted);">]</span> &nbsp;Coffee out-and-back</div>
+            <div class="mono"><span style="color: var(--muted);">[</span> 00-3 <span style="color: var(--muted);">]</span> &nbsp;Rambla recovery</div>
+          </div>
+        </div>
+        <div class="nm">Ride index</div>
+        <div class="tag">[ 00-N ] in front of every list item.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-04 ]</div>
+        <div class="demo" style="overflow: hidden; width: 100%;">
+          <div style="background: var(--ink); color: var(--bone); padding: 10px 0; overflow:hidden; border-radius: 2px;">
+            <div style="display: flex; gap: 16px; white-space: nowrap; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; animation: ticker 18s linear infinite;">
+              <span>42.8 KM ✱ 1:47 ✱ 612 M ↑ ✱ 184 W ✱ 24.0 KM/H ✱ 42.8 KM ✱ 1:47 ✱ 612 M ↑ ✱ 184 W ✱ 24.0 KM/H</span>
+            </div>
+          </div>
+        </div>
+        <div class="nm">Activity ticker</div>
+        <div class="tag">Marquee of the week's totals.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-05 ]</div>
+        <div class="demo">
+          <div style="font-size: 56px; line-height: 0.9; letter-spacing: -0.03em; font-weight: 600;">RECENT&nbsp;<em class="serif" style="color: var(--crimson); font-weight: 400;">rides</em></div>
+        </div>
+        <div class="nm">Section label</div>
+        <div class="tag">UPPERCASE sans + lowercase italic serif.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-06 ]</div>
+        <div class="demo">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border: var(--hair); border-radius: 3px;">
+            <div style="padding: 10px 12px; border-right: var(--hair); border-bottom: var(--hair);">
+              <div class="mono" style="font-size: 9px; color: var(--muted);">DIST</div>
+              <div style="font-size: 22px; font-weight: 600;">42.8 <small style="font-family: var(--f-mono); font-size: 10px; color: var(--muted); font-weight: 400;">km</small></div>
+            </div>
+            <div style="padding: 10px 12px; border-bottom: var(--hair);">
+              <div class="mono" style="font-size: 9px; color: var(--muted);">TIME</div>
+              <div style="font-size: 22px; font-weight: 600;">1:47<small style="font-family: var(--f-mono); font-size: 10px; color: var(--muted); font-weight: 400;">:12</small></div>
+            </div>
+            <div style="padding: 10px 12px; border-right: var(--hair);">
+              <div class="mono" style="font-size: 9px; color: var(--muted);">ELEV</div>
+              <div style="font-size: 22px; font-weight: 600;">612 <small style="font-family: var(--f-mono); font-size: 10px; color: var(--muted); font-weight: 400;">m</small></div>
+            </div>
+            <div style="padding: 10px 12px;">
+              <div class="mono" style="font-size: 9px; color: var(--muted);">AVG</div>
+              <div style="font-size: 22px; font-weight: 600;">24.0 <small style="font-family: var(--f-mono); font-size: 10px; color: var(--muted); font-weight: 400;">km/h</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="nm">Compact metric block</div>
+        <div class="tag">2×2 grid · always with mono labels.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-07 ]</div>
+        <div class="demo">
+          <svg viewBox="0 0 240 100" width="100%" style="max-width: 240px;">
+            <rect x="0" y="0" width="240" height="100" fill="#E5DFD2"/>
+            <path d="M 0 70 Q 60 50 100 60 T 200 35 T 240 40" stroke="#15140F" stroke-width="1.5" fill="none"/>
+            <circle cx="160" cy="42" r="5" fill="#C13525"/>
+            <circle cx="160" cy="42" r="11" fill="none" stroke="#C13525" stroke-width="1" opacity="0.4"/>
+            <text x="6" y="14" font-family="JetBrains Mono" font-size="9" fill="#15140F">[ MAP ]</text>
+            <text x="170" y="42" font-family="JetBrains Mono" font-size="9" fill="#C13525">SEL · KM 31.2</text>
+          </svg>
+        </div>
+        <div class="nm">Map overlay</div>
+        <div class="tag">Crimson selected point + bracketed corner label.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-08 ]</div>
+        <div class="demo">
+          <svg viewBox="0 0 240 80" width="100%" style="max-width: 240px;">
+            <path d="M 0 70 L 20 60 L 40 55 L 70 40 L 100 30 L 130 12 L 160 25 L 200 50 L 240 65"
+                  stroke="#455F2C" fill="none" stroke-width="1.5"/>
+            <path d="M 0 70 L 20 60 L 40 55 L 70 40 L 100 30 L 130 12 L 160 25 L 200 50 L 240 65 L 240 80 L 0 80 Z"
+                  fill="#455F2C" opacity="0.12"/>
+            <line x1="130" y1="0" x2="130" y2="80" stroke="#C13525" stroke-dasharray="2 3" stroke-width="1"/>
+            <text x="132" y="10" font-family="JetBrains Mono" font-size="9" fill="#C13525">PEAK 612m</text>
+          </svg>
+        </div>
+        <div class="nm">Elevation decoration</div>
+        <div class="tag">Field-green fill + crimson peak marker.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-09 ]</div>
+        <div class="demo">
+          <div style="border: 1.5px dashed var(--hairline); padding: 18px; border-radius: 4px; text-align:center; background: rgba(193,53,37,0.04);">
+            <div class="mono" style="color: var(--crimson);">↓ DROP GPX</div>
+            <div class="mono" style="color: var(--muted); margin-top: 6px;">.gpx · MAX 25MB</div>
+          </div>
+        </div>
+        <div class="nm">Upload affordance</div>
+        <div class="tag">Dashed hairline + monospace instruction.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-10 ]</div>
+        <div class="demo">
+          <div style="font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--carbon); display:flex; gap: 12px;">
+            <span>[ABOUT]</span><span>[RIDES↓]</span><span>[UPLOAD+]</span><span>[LOG]</span>
+          </div>
+        </div>
+        <div class="nm">Bracketed nav</div>
+        <div class="tag">Mono links wrapped in [ ].</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-11 ]</div>
+        <div class="demo" style="text-align:center;">
+          <div class="mono" style="color: var(--muted);">PAGE</div>
+          <div style="font-family: var(--f-mono); font-size: 48px; font-weight: 500; letter-spacing: -0.01em; line-height: 1;">003 <span style="color: var(--muted); font-weight: 400;">/ 014</span></div>
+        </div>
+        <div class="nm">Page counter</div>
+        <div class="tag">Three-digit, zero-padded.</div>
+      </div>
+
+      <div class="motif span-3">
+        <div class="tag">[ M-12 ]</div>
+        <div class="demo">
+          <div style="display: inline-flex; align-items: center; gap: 8px;">
+            <div style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--ink); position: relative;">
+              <div style="position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--crimson); clip-path: polygon(50% 50%, 50% 0, 100% 0, 100% 80%, 50% 80%);"></div>
+            </div>
+            <div>
+              <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">62%</div>
+              <div class="mono" style="color: var(--muted);">WEEKLY GOAL · 124 / 200 KM</div>
+            </div>
+          </div>
+        </div>
+        <div class="nm">Goal dial</div>
+        <div class="tag">Two-ring SVG, crimson on ink.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+</div>
+<!-- SECTION 07 — SCREENS / LANDING -->
+<div class="doc">
+<section class="sec" id="screens">
+  <div class="sec-head">
+    <div class="ix">[ 07 ]<br><span style="color:var(--muted)">SCREENS</span></div>
+    <h2>Main pages,<br><em>composed.</em></h2>
+    <div class="desc body">Eight surfaces. Each rendered live below — not screenshots — so the type, spacing, and motifs read the way they will ship.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="bracket" style="display:flex; justify-content: space-between; padding-bottom: 14px;">
+      <span>[ 07-A ] &nbsp;Landing &amp; auth</span>
+      <span>One screen, two jobs — explain the product, get the first GPX in.</span>
+      <span class="num">001 / 008</span>
+    </div>
+
+    <div class="mock">
+      <div class="chrome">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url">kadence.app</div>
+        <div class="mono" style="color: var(--muted);">PUBLIC</div>
+      </div>
+      <div style="padding: 14px 24px; display:flex; justify-content: space-between; align-items:center; border-bottom: var(--hair); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;">
+        <span style="display:inline-flex; gap:8px; align-items:center;"><span style="width:9px;height:9px;border-radius:50%; background:var(--crimson)"></span> Kadence</span>
+        <span style="display:flex; gap: 18px;"><a href="#" style="text-decoration:none;">[FEATURES]</a><a href="#" style="text-decoration:none;">[CHANGELOG]</a><a href="#" style="text-decoration:none;">[LOG IN ↓]</a></span>
+      </div>
+
+      <div style="padding: 64px 56px 24px;">
+        <div class="mono" style="color: var(--muted); margin-bottom: 32px;">[ 00 ] &nbsp;Original GPX cycling analytics &nbsp;·&nbsp; v0.1</div>
+        <div style="font-size: 144px; line-height: 0.85; letter-spacing: -0.045em; font-weight: 600;">
+          Every ride,<br>filed and <em class="serif" style="color: var(--crimson); font-weight: 400;">read.</em>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin-top: 56px;">
+          <div>
+            <div class="mono" style="color: var(--muted);">[ 01 ] &nbsp;Premise</div>
+            <p style="font-size: 17px; line-height: 1.45; margin: 12px 0 0;">Drop the GPX from your computer, watch, or phone. Kadence parses, validates, and lays it out — map, splits, climbs, weather, all in the same editorial frame.</p>
+          </div>
+          <div>
+            <div class="mono" style="color: var(--muted);">[ 02 ] &nbsp;Private by default</div>
+            <p style="font-size: 17px; line-height: 1.45; margin: 12px 0 0;">No feed, no follows, no leaderboard. One archive, one rider, one set of measurements you actually look at.</p>
+          </div>
+          <div>
+            <div class="mono" style="color: var(--muted);">[ 03 ] &nbsp;Get in</div>
+            <p style="font-size: 14px; line-height: 1.5; margin: 12px 0 18px; color: var(--carbon);">Sign in to start an archive — or skip and drop a GPX to preview the parse first.</p>
+            <form style="display:grid; gap: 10px;">
+              <input type="email" placeholder="you@ridemail.com" style="padding: 12px 14px; border: 1px solid var(--ink); background: transparent; border-radius: var(--r-input); font-family: var(--f-sans); font-size: 14px;">
+              <button class="btn solid" style="justify-content: center;">Continue with email →</button>
+              <div class="mono" style="color: var(--muted); text-align:center;">— OR —</div>
+              <button class="btn ghost" style="justify-content: center;">Drop a GPX to preview</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticker" style="border-top: 1px solid var(--ink); border-bottom: 0;">
+        <div class="ticker-track" style="animation-duration: 35s;">
+          <span>
+            <span>UPLOAD&nbsp;·&nbsp;PARSE&nbsp;·&nbsp;PUBLISH</span><span class="star">✱</span>
+            <span>GPX-NATIVE</span><span class="star">✱</span><span>NO FEED · NO FOLLOWS · NO NOISE</span><span class="star">✱</span>
+            <span>EST. 2026</span><span class="star">✱</span><span>RIDE, COMPOSED</span><span class="star">✱</span>
+          </span>
+          <span aria-hidden="true">
+            <span>UPLOAD&nbsp;·&nbsp;PARSE&nbsp;·&nbsp;PUBLISH</span><span class="star">✱</span>
+            <span>GPX-NATIVE</span><span class="star">✱</span><span>NO FEED · NO FOLLOWS · NO NOISE</span><span class="star">✱</span>
+            <span>EST. 2026</span><span class="star">✱</span><span>RIDE, COMPOSED</span><span class="star">✱</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="bracket" style="display:flex; justify-content: space-between; padding: 56px 0 14px;">
+      <span>[ 07-B ] &nbsp;Dashboard</span>
+      <span>The opening spread — editorial header, then working density below.</span>
+      <span class="num">002 / 008</span>
+    </div>
+
+    <div class="mock">
+      <div class="chrome">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url">kadence.app / dashboard</div>
+        <div class="mono" style="color: var(--muted);">PRIVATE</div>
+      </div>
+
+      <div class="mock-app">
+        <aside class="side">
+          <div class="brand"><span class="dot"></span> Kadence</div>
+          <nav>
+            <a class="active" href="#"><span>Dashboard</span><span class="num">[01]</span></a>
+            <a href="#"><span>Rides</span><span class="num">[02]</span></a>
+            <a href="#"><span>Trends</span><span class="num">[03]</span></a>
+            <a href="#"><span>Goals</span><span class="num">[04]</span></a>
+            <a href="#"><span>Climbs</span><span class="num">[05]</span></a>
+            <a href="#"><span>Upload GPX</span><span class="num">[+]</span></a>
+            <a href="#"><span>Settings</span><span class="num">[06]</span></a>
+          </nav>
+          <div class="side-foot">
+            ARCHIVE<br>
+            <span style="color: var(--ink); text-transform: none; font-family: var(--f-sans); font-size: 14px; letter-spacing: -0.01em;">142 rides</span><br>
+            since Jan 2024 <br><br>
+            ─<br>
+            v0.1.0 · 06/26
+          </div>
+        </aside>
+
+        <div class="main">
+          <div class="app-top">
+            <div class="crumb">Dashboard &nbsp;<em>· this week</em></div>
+            <div class="right"><span>WK 23</span><span>Mon 02 · Sun 08 Jun</span><a class="btn solid" href="#" style="padding: 6px 12px;">Upload GPX +</a></div>
+          </div>
+
+          <div class="app-title">
+            <h1>This week, <em>at a glance.</em></h1>
+            <div class="meta">
+              <div>WK 23 / 2026</div>
+              <div style="margin-top: 6px;">Mon 02 → Sun 08 Jun</div>
+              <div style="margin-top: 6px; color: var(--ink);">5 rides · 162 km · 2,140 m ↑</div>
+            </div>
+          </div>
+
+          <!-- ticker mini -->
+          <div style="border-bottom: var(--hair); background: var(--ink); color: var(--bone); overflow:hidden;">
+            <div style="display:flex; gap: 24px; white-space: nowrap; padding: 9px 0; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; animation: ticker 28s linear infinite;">
+              <span>WEEK 23 ✱ 162.4 KM ✱ 7H 21M MOVING ✱ 2,140 M ↑ ✱ 178 W AVG ✱ 142 BPM AVG ✱ +12% vs LAST WK ✱ BEST EFFORT — 20MIN @ 248W ✱ 162.4 KM ✱ 7H 21M MOVING ✱ 2,140 M ↑ ✱ 178 W AVG ✱ 142 BPM AVG ✱ +12% vs LAST WK</span>
+            </div>
+          </div>
+
+          <!-- 4-up stats -->
+          <div class="stat-row">
+            <div class="stat-cell">
+              <div class="label"><span>[ 01 ] &nbsp;DISTANCE</span><span style="color: var(--field);">+12%</span></div>
+              <div class="v">162.4<small>km</small></div>
+              <div class="delta up">↑ FROM 144.8 LAST WK</div>
+            </div>
+            <div class="stat-cell">
+              <div class="label"><span>[ 02 ] &nbsp;MOVING TIME</span><span style="color: var(--field);">+8%</span></div>
+              <div class="v">7:21<small>h</small></div>
+              <div class="delta up">↑ FROM 6:48 LAST WK</div>
+            </div>
+            <div class="stat-cell">
+              <div class="label"><span>[ 03 ] &nbsp;ELEV. GAIN</span><span style="color: var(--field);">+22%</span></div>
+              <div class="v">2,140<small>m</small></div>
+              <div class="delta up">↑ FROM 1,750 LAST WK</div>
+            </div>
+            <div class="stat-cell">
+              <div class="label"><span>[ 04 ] &nbsp;AVG POWER</span><span style="color: var(--crimson);">−3%</span></div>
+              <div class="v">178<small>w</small></div>
+              <div class="delta down">↓ FROM 183 LAST WK</div>
+            </div>
+          </div>
+
+          <div class="dash-grid">
+            <!-- training volume chart -->
+            <div class="panel" style="border-bottom: var(--hair); border-right: var(--hair);">
+              <div class="p-head">
+                <h3>[ 05 ] &nbsp;Training volume — 12 weeks</h3>
+                <div class="meta">KM PER WK · ROLLING AVG</div>
+              </div>
+              <div class="p-body">
+                <svg viewBox="0 0 720 200" class="chart" preserveAspectRatio="none">
+                  <line x1="0" y1="160" x2="720" y2="160" stroke="#C9C1B0" stroke-width="1"/>
+                  <line x1="0" y1="110" x2="720" y2="110" stroke="#C9C1B0" stroke-dasharray="2 4" stroke-width="1"/>
+                  <line x1="0" y1="60" x2="720" y2="60" stroke="#C9C1B0" stroke-dasharray="2 4" stroke-width="1"/>
+                  <!-- bars -->
+                  <g fill="#15140F">
+                    <rect x="20"  y="120" width="40" height="40"/>
+                    <rect x="80"  y="100" width="40" height="60"/>
+                    <rect x="140" y="130" width="40" height="30"/>
+                    <rect x="200" y="80"  width="40" height="80"/>
+                    <rect x="260" y="105" width="40" height="55"/>
+                    <rect x="320" y="60"  width="40" height="100"/>
+                    <rect x="380" y="85"  width="40" height="75"/>
+                    <rect x="440" y="40"  width="40" height="120"/>
+                    <rect x="500" y="90"  width="40" height="70"/>
+                    <rect x="560" y="70"  width="40" height="90"/>
+                    <rect x="620" y="55"  width="40" height="105"/>
+                    <rect x="680" y="30"  width="40" height="130" fill="#C13525"/>
+                  </g>
+                  <!-- rolling avg -->
+                  <path d="M 20 130 L 80 120 L 140 122 L 200 110 L 260 108 L 320 95 L 380 92 L 440 75 L 500 82 L 560 72 L 620 60 L 680 50" stroke="#2748B5" stroke-width="2" fill="none"/>
+                  <!-- axis labels -->
+                  <g font-family="JetBrains Mono" font-size="10" fill="#8C8678">
+                    <text x="20" y="184">W12</text>
+                    <text x="200" y="184">W15</text>
+                    <text x="380" y="184">W18</text>
+                    <text x="560" y="184">W21</text>
+                    <text x="690" y="184" fill="#C13525">W23</text>
+                    <text x="0" y="55" >200km</text>
+                    <text x="0" y="105">100km</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- goal dial + best effort -->
+            <div class="panel" style="border-bottom: var(--hair);">
+              <div class="p-head">
+                <h3>[ 06 ] &nbsp;Weekly goal</h3>
+                <div class="meta">200 KM TARGET</div>
+              </div>
+              <div class="p-body" style="display:flex; gap: 24px; align-items:center; padding-top: 24px;">
+                <svg viewBox="0 0 100 100" style="width: 120px; height: 120px;">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#E5DFD2" stroke-width="6"/>
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="#C13525" stroke-width="6"
+                          stroke-dasharray="263.9" stroke-dashoffset="100" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+                  <text x="50" y="48" text-anchor="middle" font-family="Space Grotesk" font-weight="600" font-size="22" letter-spacing="-1">62%</text>
+                  <text x="50" y="62" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#8C8678" letter-spacing="0.5">124 / 200 KM</text>
+                </svg>
+                <div>
+                  <div class="mono" style="color: var(--muted);">ON TRACK</div>
+                  <div style="font-size: 18px; line-height: 1.2; margin-top: 6px; max-width: 220px;">76 km left, 2 days. <em class="serif">A coffee loop will close it.</em></div>
+                  <div style="display:flex; gap: 8px; margin-top: 16px;">
+                    <a class="btn ghost" style="padding: 6px 10px;" href="#">View goal →</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- recent rides table -->
+            <div class="panel" style="border-right: var(--hair);">
+              <div class="p-head">
+                <h3>[ 07 ] &nbsp;Recent rides</h3>
+                <div class="meta">LAST 7 DAYS · 5 ITEMS</div>
+              </div>
+              <div class="p-body">
+                <table class="rides">
+                  <thead>
+                    <tr><th style="width: 60px;">IX</th><th>NAME</th><th class="num">DIST</th><th class="num">TIME</th><th class="num">ELEV ↑</th><th class="num">AVG W</th><th class="num">DATE</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="ix">[ 00-1 ]</span></td>
+                      <td><div class="ti">Punta Carretas dawn loop</div><div class="sub">Cobalt morning, no wind</div></td>
+                      <td class="num">42.8 <small style="color:var(--muted)">km</small></td>
+                      <td class="num">1:47</td>
+                      <td class="num">612</td>
+                      <td class="num">184</td>
+                      <td class="num" style="color:var(--muted)">Sun · 06/08</td>
+                    </tr>
+                    <tr>
+                      <td><span class="ix">[ 00-2 ]</span></td>
+                      <td><div class="ti">Camino de los Horneros</div><div class="sub">Two climbs, headwind back</div></td>
+                      <td class="num">38.2 <small style="color:var(--muted)">km</small></td>
+                      <td class="num">1:32</td>
+                      <td class="num">540</td>
+                      <td class="num">192</td>
+                      <td class="num" style="color:var(--muted)">Sat · 06/07</td>
+                    </tr>
+                    <tr>
+                      <td><span class="ix">[ 00-3 ]</span></td>
+                      <td><div class="ti">Recovery rambla</div><div class="sub">Z2 only, long café stop</div></td>
+                      <td class="num">22.1 <small style="color:var(--muted)">km</small></td>
+                      <td class="num">1:04</td>
+                      <td class="num">110</td>
+                      <td class="num">132</td>
+                      <td class="num" style="color:var(--muted)">Thu · 06/05</td>
+                    </tr>
+                    <tr>
+                      <td><span class="ix">[ 00-4 ]</span></td>
+                      <td><div class="ti">Tuesday hill loop</div><div class="sub">PR on 20-min effort</div></td>
+                      <td class="num">31.5 <small style="color:var(--muted)">km</small></td>
+                      <td class="num">1:18</td>
+                      <td class="num">488</td>
+                      <td class="num">211</td>
+                      <td class="num" style="color:var(--muted)">Tue · 06/03</td>
+                    </tr>
+                    <tr>
+                      <td><span class="ix">[ 00-5 ]</span></td>
+                      <td><div class="ti">Commute (in)</div><div class="sub">Wet, careful</div></td>
+                      <td class="num">12.4 <small style="color:var(--muted)">km</small></td>
+                      <td class="num">0:38</td>
+                      <td class="num">85</td>
+                      <td class="num">154</td>
+                      <td class="num" style="color:var(--muted)">Mon · 06/02</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- right column: best effort + weather -->
+            <div class="panel">
+              <div class="p-head">
+                <h3>[ 08 ] &nbsp;Best efforts &amp; weather</h3>
+                <div class="meta">LAST 30 DAYS</div>
+              </div>
+              <div class="p-body" style="display:grid; gap: 16px;">
+                <div style="border: var(--hair); border-radius: 3px;">
+                  <div style="padding: 10px 12px; border-bottom: var(--hair); display:flex; justify-content: space-between;" class="mono">
+                    <span style="color:var(--ink)">[ BE-01 ]&nbsp;20-MIN POWER</span><span style="color: var(--field);">PR · +6W</span>
+                  </div>
+                  <div style="padding: 12px;">
+                    <div style="font-size: 30px; line-height: 1; letter-spacing: -0.02em; font-weight: 600;">248<small style="font-family: var(--f-mono); font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 4px;">W</small></div>
+                    <div class="mono" style="color: var(--muted); margin-top: 6px;">Tuesday hill loop · KM 9.4 – 19.8</div>
+                  </div>
+                </div>
+                <div style="border: var(--hair); border-radius: 3px;">
+                  <div style="padding: 10px 12px; border-bottom: var(--hair); display:flex; justify-content: space-between;" class="mono">
+                    <span style="color:var(--ink)">[ BE-02 ]&nbsp;FASTEST 10 KM</span><span style="color: var(--muted);">−</span>
+                  </div>
+                  <div style="padding: 12px;">
+                    <div style="font-size: 30px; line-height: 1; letter-spacing: -0.02em; font-weight: 600;">19:42<small style="font-family: var(--f-mono); font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 4px;">min</small></div>
+                    <div class="mono" style="color: var(--muted); margin-top: 6px;">Punta Carretas dawn loop</div>
+                  </div>
+                </div>
+                <div style="border: var(--hair); border-radius: 3px; background: var(--bone-2);">
+                  <div style="padding: 10px 12px; border-bottom: var(--hair); display:flex; justify-content: space-between;" class="mono">
+                    <span style="color:var(--ink)">[ WX ]&nbsp;TOMORROW · 06:30</span><span style="color: var(--sun);">UV 6</span>
+                  </div>
+                  <div style="padding: 12px; display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+                    <div><div class="mono" style="color:var(--muted)">TEMP</div><div style="font-size: 18px; font-weight: 600;">12°</div></div>
+                    <div><div class="mono" style="color:var(--muted)">WIND</div><div style="font-size: 18px; font-weight: 600;">SE 14</div></div>
+                    <div><div class="mono" style="color:var(--muted)">PRECIP</div><div style="font-size: 18px; font-weight: 600;">5%</div></div>
+                    <div><div class="mono" style="color:var(--muted)">SUNRISE</div><div style="font-size: 18px; font-weight: 600;">07:42</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- empty state hint -->
+          <div style="padding: 18px 24px; border-top: var(--hair); display:flex; justify-content: space-between; align-items:center;">
+            <div class="mono" style="color: var(--muted);">[ EMPTY ] &nbsp;For new archives — the same layout reveals an editorial "Drop your first GPX" hero instead of stats; sidebar count reads &nbsp;<b style="color:var(--ink)">0 rides</b>.</div>
+            <a class="btn ghost" href="#" style="padding: 6px 12px;">See empty state →</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD FLOW -->
+    <div class="bracket" style="display:flex; justify-content: space-between; padding: 56px 0 14px;">
+      <span>[ 07-C ] &nbsp;Upload flow · 5 states</span>
+      <span>Empty → drop → validating → preview → success / failed.</span>
+      <span class="num">003 / 008</span>
+    </div>
+
+    <div class="upload-grid">
+
+      <article class="upload-state">
+        <div class="top"><span class="nm">[ 01 ] &nbsp;EMPTY</span><span>·</span></div>
+        <div class="body">
+          <div class="mono" style="color: var(--muted);">No GPX in queue.</div>
+          <div class="dropzone" style="flex:1;">
+            <div>
+              <div class="mono" style="color: var(--ink);">↓ &nbsp;DROP &nbsp;.GPX</div>
+              <div class="mono" style="color: var(--muted); margin-top: 8px;">or click to select</div>
+              <div class="mono" style="color: var(--muted); margin-top: 14px;">MAX 25 MB · ONE FILE</div>
+            </div>
+          </div>
+          <div class="mono" style="color: var(--muted);">Compatible — Garmin · Wahoo · Apple · Strava export · any standard GPX 1.1.</div>
+        </div>
+      </article>
+
+      <article class="upload-state">
+        <div class="top"><span class="nm">[ 02 ] &nbsp;DRAG OVER</span><span style="color:var(--crimson)">ACTIVE</span></div>
+        <div class="body">
+          <div class="mono" style="color: var(--muted);">File detected.</div>
+          <div class="dropzone active" style="flex:1; border-color: var(--ink);">
+            <div style="text-align:center;">
+              <div class="mono" style="color: var(--crimson); font-size: 14px;">↓ &nbsp;RELEASE TO UPLOAD</div>
+              <div class="mono" style="color: var(--ink); margin-top: 14px;">tuesday-hill-loop.gpx</div>
+              <div class="mono" style="color: var(--muted); margin-top: 4px;">3.2 MB</div>
+            </div>
+          </div>
+          <div class="mono" style="color: var(--muted);">Hold over the panel — release anywhere inside.</div>
+        </div>
+      </article>
+
+      <article class="upload-state">
+        <div class="top"><span class="nm">[ 03 ] &nbsp;PARSING</span><span style="color: var(--cobalt);">02 / 04</span></div>
+        <div class="body">
+          <div class="mono" style="color: var(--muted);">tuesday-hill-loop.gpx</div>
+          <div style="border: var(--hair); padding: 14px; border-radius: 3px; flex:1; display:flex; flex-direction: column; justify-content: center;">
+            <div style="display:grid; gap: 8px;">
+              <div style="display:flex; justify-content: space-between;" class="mono"><span>✓ READ FILE</span><span style="color: var(--field);">DONE</span></div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span>✓ VALIDATE XML</span><span style="color: var(--field);">DONE</span></div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span>⊙ EXTRACT TRACKPOINTS</span><span style="color: var(--cobalt);">4,210 / 8,442</span></div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span>… COMPUTE METRICS</span><span style="color: var(--muted);">QUEUED</span></div>
+            </div>
+            <div style="margin-top: 16px; height: 4px; background: var(--bone-2); border-radius: 999px; overflow: hidden;">
+              <div style="height: 100%; width: 64%; background: var(--ink);"></div>
+            </div>
+            <div class="mono" style="color: var(--muted); margin-top: 8px;">64% · usually under 2 seconds</div>
+          </div>
+          <a class="btn ghost" href="#" style="justify-content: center; padding: 8px 12px;">Cancel upload</a>
+        </div>
+      </article>
+
+      <article class="upload-state">
+        <div class="top"><span class="nm">[ 04 ] &nbsp;PREVIEW</span><span>BEFORE SAVE</span></div>
+        <div class="body">
+          <div style="border: var(--hair); padding: 12px; border-radius: 3px; flex:1; display:flex; flex-direction: column; gap: 10px;">
+            <svg viewBox="0 0 240 80" width="100%">
+              <rect x="0" y="0" width="240" height="80" fill="#E5DFD2"/>
+              <path d="M 6 50 Q 30 30 60 40 T 120 20 T 180 35 T 234 18" stroke="#C13525" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="6" cy="50" r="3" fill="#15140F"/>
+              <circle cx="234" cy="18" r="3" fill="#15140F"/>
+            </svg>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;">
+              <div><div class="mono" style="color:var(--muted)">DIST</div><div style="font-weight:600">31.5 km</div></div>
+              <div><div class="mono" style="color:var(--muted)">TIME</div><div style="font-weight:600">1:18:42</div></div>
+              <div><div class="mono" style="color:var(--muted)">ELEV ↑</div><div style="font-weight:600">488 m</div></div>
+              <div><div class="mono" style="color:var(--muted)">AVG</div><div style="font-weight:600">24.0 km/h</div></div>
+            </div>
+            <input type="text" value="Tuesday hill loop" style="border: 1px solid var(--ink); background: transparent; padding: 8px 10px; border-radius: 3px; font-family: var(--f-sans); font-size: 13px;">
+            <div class="mono" style="color: var(--muted);">Edit name, then save to archive.</div>
+          </div>
+          <div style="display:flex; gap: 8px;">
+            <a class="btn ghost" href="#" style="padding: 8px 12px; flex:1; justify-content: center;">Discard</a>
+            <a class="btn crimson" href="#" style="padding: 8px 12px; flex:1; justify-content: center;">Save ride →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="upload-state">
+        <div class="top"><span class="nm">[ 05 ] &nbsp;OUTCOMES</span><span>SUCCESS · FAIL</span></div>
+        <div class="body">
+          <div style="border: var(--hair); padding: 14px; border-radius: 3px; background: rgba(69,95,44,0.06);">
+            <div class="mono" style="color: var(--field);">[ ✓ SUCCESS ]</div>
+            <div style="font-size: 17px; margin-top: 6px; font-weight: 600;">Tuesday hill loop saved.</div>
+            <div class="mono" style="color: var(--muted); margin-top: 4px;">Filed as ride [ 00-143 ] · view now</div>
+          </div>
+          <div style="border: 1px solid var(--crimson); padding: 14px; border-radius: 3px; background: rgba(193,53,37,0.05);">
+            <div class="mono" style="color: var(--crimson);">[ ✕ FAILED ]</div>
+            <div style="font-size: 17px; margin-top: 6px; font-weight: 600;">No trackpoints found.</div>
+            <div class="mono" style="color: var(--muted); margin-top: 4px;">The GPX parsed but contains 0 &lt;trkpt&gt;. Common cause — route file, not activity.</div>
+            <div style="display:flex; gap: 6px; margin-top: 10px;">
+              <a class="btn ghost" href="#" style="padding: 5px 10px;">Try again</a>
+              <a class="btn ghost" href="#" style="padding: 5px 10px;">Read docs</a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- ACTIVITY DETAIL -->
+    <div class="bracket" style="display:flex; justify-content: space-between; padding: 56px 0 14px;">
+      <span>[ 07-D ] &nbsp;Activity detail</span>
+      <span>Single ride, fully composed — map, profile, splits, climbs, weather.</span>
+      <span class="num">004 / 008</span>
+    </div>
+
+    <div class="activity">
+      <!-- ride header -->
+      <div class="head">
+        <div class="ix">
+          <div>[ 00-143 ]</div>
+          <div style="color: var(--muted); margin-top: 8px;">Tue · 06/03</div>
+          <div style="color: var(--muted); margin-top: 2px;">06:42 local</div>
+        </div>
+        <div>
+          <div class="ix">Ride</div>
+          <h1>Tuesday hill loop,<br><em>cold start.</em></h1>
+        </div>
+        <div>
+          <div class="meta-grid">
+            <span class="k">Start</span><span class="v">−34.9011°, −56.1645°</span>
+            <span class="k">End</span><span class="v">−34.9011°, −56.1640°</span>
+            <span class="k">Source</span><span class="v">Garmin · Edge 530</span>
+            <span class="k">Type</span><span class="v">Road · solo</span>
+          </div>
+        </div>
+        <div>
+          <div class="meta-grid">
+            <span class="k">Weather</span><span class="v">8°C · S 12 km/h · clear</span>
+            <span class="k">Sun</span><span class="v">↑ 07:28 · UV 2</span>
+            <span class="k">File</span><span class="v">tuesday-hill-loop.gpx · 3.2 MB</span>
+            <span class="k">Uploaded</span><span class="v">06/03 · 19:12</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- the map -->
+      <div class="map" style="height: 420px; position: relative;">
+        <svg viewBox="0 0 1280 420" preserveAspectRatio="xMidYMid slice" style="width:100%; height:100%; display:block;">
+          <!-- terrain hills -->
+          <g fill="#D7CFBA" opacity="0.6">
+            <ellipse cx="200" cy="350" rx="280" ry="80"/>
+            <ellipse cx="900" cy="380" rx="340" ry="90"/>
+            <ellipse cx="600" cy="120" rx="260" ry="70"/>
+          </g>
+          <!-- coastline -->
+          <path d="M 0 320 Q 200 300 400 310 T 800 290 T 1280 300 L 1280 420 L 0 420 Z" fill="#CFC5AE" opacity="0.5"/>
+          <!-- route -->
+          <path id="route"
+                d="M 120 320 Q 200 200 280 240 T 460 160 T 620 220 T 780 110 T 940 180 T 1100 80 L 1160 130"
+                stroke="#15140F" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <!-- selected segment -->
+          <path d="M 620 220 T 780 110" stroke="#C13525" stroke-width="4" fill="none"/>
+          <!-- markers -->
+          <g>
+            <circle cx="120" cy="320" r="6" fill="#15140F"/>
+            <text x="130" y="316" font-family="JetBrains Mono" font-size="11" fill="#15140F">START · 00:00</text>
+            <circle cx="1160" cy="130" r="6" fill="#15140F"/>
+            <text x="1080" y="115" font-family="JetBrains Mono" font-size="11" fill="#15140F">END · 1:18:42</text>
+            <circle cx="780" cy="110" r="7" fill="#C13525"/>
+            <circle cx="780" cy="110" r="14" fill="none" stroke="#C13525" stroke-width="1" opacity="0.5"/>
+            <text x="794" y="105" font-family="JetBrains Mono" font-size="11" fill="#C13525">SEL · KM 16.4 · 248W</text>
+          </g>
+          <!-- corner brackets -->
+          <g font-family="JetBrains Mono" font-size="10" fill="#15140F">
+            <text x="20" y="30">[ MAP ]</text>
+            <text x="20" y="46" fill="#8C8678">31.5 KM · 488 M ↑</text>
+            <text x="1180" y="30" text-anchor="end">[ 1:1500 ]</text>
+            <text x="1180" y="46" text-anchor="end" fill="#8C8678">MAPLIBRE · OSM</text>
+          </g>
+          <!-- mini compass -->
+          <g transform="translate(1200, 380)">
+            <circle r="20" fill="none" stroke="#15140F" stroke-width="1"/>
+            <line x1="0" y1="-15" x2="0" y2="15" stroke="#15140F"/>
+            <line x1="-15" y1="0" x2="15" y2="0" stroke="#15140F"/>
+            <text x="0" y="-22" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#15140F">N</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- core stats -->
+      <div class="stat-row">
+        <div class="stat-cell">
+          <div class="label"><span>[ 01 ] &nbsp;DISTANCE</span></div>
+          <div class="v">31.5<small>km</small></div>
+        </div>
+        <div class="stat-cell">
+          <div class="label"><span>[ 02 ] &nbsp;MOVING</span></div>
+          <div class="v">1:18<small>:42</small></div>
+        </div>
+        <div class="stat-cell">
+          <div class="label"><span>[ 03 ] &nbsp;ELAPSED</span></div>
+          <div class="v">1:24<small>:08</small></div>
+        </div>
+        <div class="stat-cell">
+          <div class="label"><span>[ 04 ] &nbsp;ELEV ↑</span></div>
+          <div class="v">488<small>m</small></div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-cell">
+          <div class="label"><span>[ 05 ] &nbsp;AVG SPEED</span></div>
+          <div class="v">24.0<small>km/h</small></div>
+        </div>
+        <div class="stat-cell">
+          <div class="label"><span>[ 06 ] &nbsp;MAX SPEED</span></div>
+          <div class="v">52.8<small>km/h</small></div>
+        </div>
+        <div class="stat-cell">
+          <div class="label"><span>[ 07 ] &nbsp;AVG HR</span></div>
+          <div class="v">152<small>bpm</small></div>
+        </div>
+        <div class="stat-cell">
+          <div class="label"><span>[ 08 ] &nbsp;AVG POWER</span></div>
+          <div class="v">211<small>W</small></div>
+        </div>
+      </div>
+
+      <!-- elevation profile -->
+      <div class="panel" style="border-right: 0; border-bottom: var(--hair);">
+        <div class="p-head">
+          <h3>[ 09 ] &nbsp;Elevation profile · climbs detected</h3>
+          <div class="meta">3 CLIMBS · CAT 4 / CAT 3 / UNCAT</div>
+        </div>
+        <div class="p-body">
+          <svg viewBox="0 0 1280 220" preserveAspectRatio="none" style="width:100%; height: 220px;">
+            <!-- grid -->
+            <line x1="0" y1="170" x2="1280" y2="170" stroke="#C9C1B0"/>
+            <line x1="0" y1="120" x2="1280" y2="120" stroke="#C9C1B0" stroke-dasharray="2 4"/>
+            <line x1="0" y1="70"  x2="1280" y2="70"  stroke="#C9C1B0" stroke-dasharray="2 4"/>
+            <!-- area + line -->
+            <path d="M 0 170 L 60 150 L 130 140 L 220 110 L 320 60 L 380 80 L 460 140 L 540 130 L 640 90 L 720 50 L 820 80 L 920 120 L 1020 70 L 1120 100 L 1200 140 L 1280 130 L 1280 200 L 0 200 Z"
+                  fill="#455F2C" opacity="0.16"/>
+            <path d="M 0 170 L 60 150 L 130 140 L 220 110 L 320 60 L 380 80 L 460 140 L 540 130 L 640 90 L 720 50 L 820 80 L 920 120 L 1020 70 L 1120 100 L 1200 140 L 1280 130"
+                  fill="none" stroke="#455F2C" stroke-width="2"/>
+            <!-- climb 1 highlight -->
+            <rect x="130" y="0"  width="190" height="200" fill="#C13525" opacity="0.06"/>
+            <rect x="540" y="0"  width="180" height="200" fill="#C13525" opacity="0.06"/>
+            <rect x="920" y="0"  width="100" height="200" fill="#C13525" opacity="0.06"/>
+            <!-- markers -->
+            <circle cx="320" cy="60" r="5" fill="#C13525"/>
+            <circle cx="720" cy="50" r="5" fill="#C13525"/>
+            <circle cx="1020" cy="70" r="5" fill="#C13525"/>
+            <!-- labels -->
+            <g font-family="JetBrains Mono" font-size="10" fill="#15140F">
+              <text x="135" y="20">[ C-1 ] CAT 4 · 1.9 KM · 4.2%</text>
+              <text x="545" y="20">[ C-2 ] CAT 3 · 1.8 KM · 6.0%</text>
+              <text x="925" y="20">[ C-3 ] UNCAT · 1.0 KM · 5.1%</text>
+            </g>
+            <g font-family="JetBrains Mono" font-size="10" fill="#8C8678">
+              <text x="0" y="184">KM 0</text>
+              <text x="320" y="184">KM 8</text>
+              <text x="640" y="184">KM 16</text>
+              <text x="960" y="184">KM 24</text>
+              <text x="1240" y="184">KM 31.5</text>
+              <text x="0" y="65">280m</text>
+              <text x="0" y="125">160m</text>
+              <text x="0" y="175">40m</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- two-column chart row -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: var(--hair);">
+        <div class="panel" style="border-right: var(--hair); border-bottom: 0;">
+          <div class="p-head"><h3>[ 10 ] &nbsp;Speed</h3><div class="meta">KM/H · AVG 24.0 · MAX 52.8</div></div>
+          <div class="p-body">
+            <svg viewBox="0 0 600 160" preserveAspectRatio="none" style="width:100%; height: 160px;">
+              <line x1="0" y1="120" x2="600" y2="120" stroke="#C9C1B0"/>
+              <path d="M 0 90 L 40 80 L 80 60 L 130 70 L 180 40 L 240 80 L 290 60 L 340 30 L 400 70 L 460 60 L 520 85 L 600 100" fill="none" stroke="#2748B5" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="panel" style="border-bottom: 0;">
+          <div class="p-head"><h3>[ 11 ] &nbsp;Heart rate</h3><div class="meta">BPM · AVG 152 · MAX 178</div></div>
+          <div class="p-body">
+            <svg viewBox="0 0 600 160" preserveAspectRatio="none" style="width:100%; height: 160px;">
+              <line x1="0" y1="120" x2="600" y2="120" stroke="#C9C1B0"/>
+              <path d="M 0 100 L 60 80 L 120 70 L 180 50 L 240 60 L 300 40 L 360 70 L 420 60 L 480 50 L 540 80 L 600 90" fill="none" stroke="#C13525" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: var(--hair);">
+        <div class="panel" style="border-right: var(--hair); border-bottom: 0;">
+          <div class="p-head"><h3>[ 12 ] &nbsp;Power</h3><div class="meta">W · AVG 211 · NP 234</div></div>
+          <div class="p-body">
+            <svg viewBox="0 0 600 160" preserveAspectRatio="none" style="width:100%; height: 160px;">
+              <line x1="0" y1="120" x2="600" y2="120" stroke="#C9C1B0"/>
+              <g fill="#D9A12B" opacity="0.5">
+                <rect x="0" y="80" width="20" height="40"/>
+                <rect x="22" y="60" width="20" height="60"/>
+                <rect x="44" y="40" width="20" height="80"/>
+                <rect x="66" y="70" width="20" height="50"/>
+                <rect x="88" y="50" width="20" height="70"/>
+                <rect x="110" y="30" width="20" height="90"/>
+                <rect x="132" y="60" width="20" height="60"/>
+                <rect x="154" y="90" width="20" height="30"/>
+                <rect x="176" y="40" width="20" height="80"/>
+                <rect x="198" y="70" width="20" height="50"/>
+                <rect x="220" y="80" width="20" height="40"/>
+                <rect x="242" y="50" width="20" height="70"/>
+                <rect x="264" y="30" width="20" height="90"/>
+                <rect x="286" y="60" width="20" height="60"/>
+                <rect x="308" y="40" width="20" height="80"/>
+                <rect x="330" y="70" width="20" height="50"/>
+                <rect x="352" y="20" width="20" height="100"/>
+                <rect x="374" y="50" width="20" height="70"/>
+                <rect x="396" y="80" width="20" height="40"/>
+                <rect x="418" y="60" width="20" height="60"/>
+                <rect x="440" y="40" width="20" height="80"/>
+                <rect x="462" y="70" width="20" height="50"/>
+                <rect x="484" y="90" width="20" height="30"/>
+                <rect x="506" y="60" width="20" height="60"/>
+                <rect x="528" y="50" width="20" height="70"/>
+                <rect x="550" y="40" width="20" height="80"/>
+                <rect x="572" y="80" width="20" height="40"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="panel" style="border-bottom: 0;">
+          <div class="p-head"><h3>[ 13 ] &nbsp;Cadence</h3><div class="meta">RPM · AVG 86</div></div>
+          <div class="p-body">
+            <svg viewBox="0 0 600 160" preserveAspectRatio="none" style="width:100%; height: 160px;">
+              <line x1="0" y1="120" x2="600" y2="120" stroke="#C9C1B0"/>
+              <path d="M 0 70 L 60 60 L 120 50 L 180 70 L 240 60 L 300 50 L 360 80 L 420 60 L 480 70 L 540 60 L 600 80" fill="none" stroke="#4B5A6B" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- splits table -->
+      <div class="panel" style="border-right: 0;">
+        <div class="p-head">
+          <h3>[ 14 ] &nbsp;Splits</h3>
+          <div class="meta">PER KILOMETRE · 31 ROWS</div>
+        </div>
+        <div class="p-body">
+          <table class="rides">
+            <thead>
+              <tr><th style="width: 50px;">KM</th><th class="num">TIME</th><th class="num">PACE</th><th>EFFORT</th><th class="num">ELEV ↑</th><th class="num">AVG W</th><th class="num">HR</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">01</td><td class="num">2:36</td><td class="num">23.0</td><td><div style="height:6px; background: #455F2C; width: 26%;"></div></td><td class="num">12</td><td class="num">182</td><td class="num">138</td></tr>
+              <tr><td class="num">02</td><td class="num">2:24</td><td class="num">25.0</td><td><div style="height:6px; background: #455F2C; width: 32%;"></div></td><td class="num">8</td><td class="num">195</td><td class="num">145</td></tr>
+              <tr><td class="num">03</td><td class="num">2:20</td><td class="num">25.7</td><td><div style="height:6px; background: #D9A12B; width: 42%;"></div></td><td class="num">22</td><td class="num">220</td><td class="num">154</td></tr>
+              <tr><td class="num">04</td><td class="num">2:18</td><td class="num">26.1</td><td><div style="height:6px; background: #D9A12B; width: 46%;"></div></td><td class="num">14</td><td class="num">228</td><td class="num">158</td></tr>
+              <tr style="background: rgba(193,53,37,0.06);"><td class="num" style="color:var(--crimson)">05</td><td class="num">3:02</td><td class="num">19.8</td><td><div style="height:6px; background: #C13525; width: 78%;"></div></td><td class="num">62</td><td class="num">298</td><td class="num">172</td></tr>
+              <tr style="background: rgba(193,53,37,0.06);"><td class="num" style="color:var(--crimson)">06</td><td class="num">2:54</td><td class="num">20.7</td><td><div style="height:6px; background: #C13525; width: 72%;"></div></td><td class="num">48</td><td class="num">282</td><td class="num">175</td></tr>
+              <tr><td class="num">07</td><td class="num">2:26</td><td class="num">24.7</td><td><div style="height:6px; background: #D9A12B; width: 38%;"></div></td><td class="num">10</td><td class="num">210</td><td class="num">162</td></tr>
+              <tr><td class="num">08</td><td class="num">1:56</td><td class="num">31.0</td><td><div style="height:6px; background: #455F2C; width: 24%;"></div></td><td class="num">−40</td><td class="num">142</td><td class="num">148</td></tr>
+            </tbody>
+          </table>
+          <div class="mono" style="color: var(--muted); margin-top: 12px;">— SHOWING 8 OF 31 KM · CLICK A ROW TO HIGHLIGHT ON MAP — </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRENDS -->
+    <div class="bracket" style="display:flex; justify-content: space-between; padding: 56px 0 14px;">
+      <span>[ 07-E ] &nbsp;Trends</span>
+      <span>The long view — fitness over months, not minutes.</span>
+      <span class="num">005 / 008</span>
+    </div>
+
+    <div class="mock">
+      <div class="chrome">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url">kadence.app / trends</div>
+        <div class="mono" style="color: var(--muted);">PRIVATE</div>
+      </div>
+      <div style="padding: 32px 56px 24px; background: var(--bone);">
+        <div class="mono" style="color: var(--muted);">[ 03 ] &nbsp;Trends</div>
+        <div style="font-size: 88px; line-height: 0.9; letter-spacing: -0.035em; font-weight: 600; margin-top: 8px;">52&nbsp;weeks,<br><em class="serif" style="color: var(--crimson); font-weight: 400;">one rider.</em></div>
+        <div style="display:flex; gap: 12px; margin-top: 24px;" class="mono">
+          <span class="pill ink">52 WEEKS</span>
+          <span class="pill">12 WEEKS</span>
+          <span class="pill">4 WEEKS</span>
+          <span class="pill">YEAR TO DATE</span>
+          <span style="margin-left: auto;" class="pill">VS LAST PERIOD</span>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-cell"><div class="label">[ 01 ] &nbsp;TOTAL DISTANCE</div><div class="v">5,842<small>km</small></div><div class="delta up">↑ +18% vs PRIOR 52</div></div>
+        <div class="stat-cell"><div class="label">[ 02 ] &nbsp;TOTAL TIME</div><div class="v">241:18<small>h</small></div><div class="delta up">↑ +12%</div></div>
+        <div class="stat-cell"><div class="label">[ 03 ] &nbsp;TOTAL ELEV ↑</div><div class="v">68,420<small>m</small></div><div class="delta up">↑ +22%</div></div>
+        <div class="stat-cell"><div class="label">[ 04 ] &nbsp;RIDES</div><div class="v">142</div><div class="delta up">↑ +8</div></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 2fr 1fr; border-bottom: var(--hair);">
+        <div class="panel" style="border-right: var(--hair);">
+          <div class="p-head"><h3>[ 05 ] &nbsp;Distance · 52 weeks</h3><div class="meta">KM PER WEEK + 8WK ROLLING</div></div>
+          <div class="p-body">
+            <svg viewBox="0 0 900 240" preserveAspectRatio="none" style="width:100%; height: 240px;">
+              <line x1="0" y1="200" x2="900" y2="200" stroke="#C9C1B0"/>
+              <line x1="0" y1="140" x2="900" y2="140" stroke="#C9C1B0" stroke-dasharray="2 4"/>
+              <line x1="0" y1="80"  x2="900" y2="80"  stroke="#C9C1B0" stroke-dasharray="2 4"/>
+              <g fill="#15140F">
+                <!-- 52 bars across width 900, each 14 wide, 3 gap -->
+                <!-- using a simple pseudo random pattern -->
+                <rect x="6" y="160" width="14" height="40"/>
+                <rect x="23" y="140" width="14" height="60"/>
+                <rect x="40" y="155" width="14" height="45"/>
+                <rect x="57" y="125" width="14" height="75"/>
+                <rect x="74" y="130" width="14" height="70"/>
+                <rect x="91" y="110" width="14" height="90"/>
+                <rect x="108" y="135" width="14" height="65"/>
+                <rect x="125" y="105" width="14" height="95"/>
+                <rect x="142" y="120" width="14" height="80"/>
+                <rect x="159" y="95" width="14" height="105"/>
+                <rect x="176" y="115" width="14" height="85"/>
+                <rect x="193" y="85" width="14" height="115"/>
+                <rect x="210" y="120" width="14" height="80"/>
+                <rect x="227" y="100" width="14" height="100"/>
+                <rect x="244" y="125" width="14" height="75"/>
+                <rect x="261" y="90" width="14" height="110"/>
+                <rect x="278" y="105" width="14" height="95"/>
+                <rect x="295" y="75" width="14" height="125"/>
+                <rect x="312" y="100" width="14" height="100"/>
+                <rect x="329" y="115" width="14" height="85"/>
+                <rect x="346" y="85" width="14" height="115"/>
+                <rect x="363" y="105" width="14" height="95"/>
+                <rect x="380" y="125" width="14" height="75"/>
+                <rect x="397" y="95" width="14" height="105"/>
+                <rect x="414" y="80" width="14" height="120"/>
+                <rect x="431" y="115" width="14" height="85"/>
+                <rect x="448" y="100" width="14" height="100"/>
+                <rect x="465" y="125" width="14" height="75"/>
+                <rect x="482" y="105" width="14" height="95"/>
+                <rect x="499" y="85" width="14" height="115"/>
+                <rect x="516" y="65" width="14" height="135"/>
+                <rect x="533" y="95" width="14" height="105"/>
+                <rect x="550" y="75" width="14" height="125"/>
+                <rect x="567" y="110" width="14" height="90"/>
+                <rect x="584" y="85" width="14" height="115"/>
+                <rect x="601" y="100" width="14" height="100"/>
+                <rect x="618" y="60" width="14" height="140"/>
+                <rect x="635" y="90" width="14" height="110"/>
+                <rect x="652" y="70" width="14" height="130"/>
+                <rect x="669" y="105" width="14" height="95"/>
+                <rect x="686" y="85" width="14" height="115"/>
+                <rect x="703" y="120" width="14" height="80"/>
+                <rect x="720" y="80" width="14" height="120"/>
+                <rect x="737" y="100" width="14" height="100"/>
+                <rect x="754" y="60" width="14" height="140"/>
+                <rect x="771" y="95" width="14" height="105"/>
+                <rect x="788" y="70" width="14" height="130"/>
+                <rect x="805" y="55" width="14" height="145"/>
+                <rect x="822" y="80" width="14" height="120"/>
+                <rect x="839" y="65" width="14" height="135"/>
+                <rect x="856" y="90" width="14" height="110"/>
+                <rect x="873" y="40" width="14" height="160" fill="#C13525"/>
+              </g>
+              <path d="M 6 165 L 91 130 L 176 115 L 261 105 L 346 100 L 431 95 L 516 80 L 601 80 L 686 75 L 771 65 L 873 55" stroke="#2748B5" stroke-width="2" fill="none"/>
+              <g font-family="JetBrains Mono" font-size="10" fill="#8C8678">
+                <text x="0" y="80">200km</text>
+                <text x="0" y="140">100km</text>
+                <text x="6" y="220">JUN '25</text>
+                <text x="230" y="220">SEP</text>
+                <text x="450" y="220">DEC</text>
+                <text x="670" y="220">MAR '26</text>
+                <text x="870" y="220" fill="#C13525" text-anchor="end">JUN '26</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="p-head"><h3>[ 06 ] &nbsp;Effort distribution</h3><div class="meta">% TIME IN ZONE</div></div>
+          <div class="p-body" style="display:flex; flex-direction: column; gap: 14px;">
+            <div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">Z1 ENDURANCE</span><span>32%</span></div>
+              <div style="height: 8px; background: var(--bone-2); border-radius: 2px; margin-top: 4px;"><div style="height:100%; width: 32%; background: var(--field);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">Z2 STEADY</span><span>41%</span></div>
+              <div style="height: 8px; background: var(--bone-2); border-radius: 2px; margin-top: 4px;"><div style="height:100%; width: 41%; background: var(--cobalt);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">Z3 TEMPO</span><span>16%</span></div>
+              <div style="height: 8px; background: var(--bone-2); border-radius: 2px; margin-top: 4px;"><div style="height:100%; width: 16%; background: var(--sun);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">Z4 THRESHOLD</span><span>8%</span></div>
+              <div style="height: 8px; background: var(--bone-2); border-radius: 2px; margin-top: 4px;"><div style="height:100%; width: 8%; background: var(--crimson);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">Z5 VO2</span><span>3%</span></div>
+              <div style="height: 8px; background: var(--bone-2); border-radius: 2px; margin-top: 4px;"><div style="height:100%; width: 3%; background: var(--crimson-ink);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOALS + SETTINGS side by side -->
+    <div class="bracket" style="display:flex; justify-content: space-between; padding: 56px 0 14px;">
+      <span>[ 07-F / 07-G ] &nbsp;Goals · Settings</span>
+      <span>Plain-text targets. Plain-text preferences. No dashboards inside dashboards.</span>
+      <span class="num">006–007 / 008</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+      <div class="mock">
+        <div class="chrome"><div class="dots"><span></span><span></span><span></span></div><div class="url">kadence.app / goals</div><div class="mono" style="color: var(--muted);">[ 07-F ]</div></div>
+        <div style="padding: 32px 32px 16px;">
+          <div class="mono" style="color: var(--muted);">[ 04 ] &nbsp;Goals</div>
+          <div style="font-size: 56px; line-height: 0.95; letter-spacing: -0.03em; font-weight: 600; margin-top: 6px;">What you said<br>you'd <em class="serif" style="color: var(--crimson); font-weight: 400;">do.</em></div>
+        </div>
+        <div style="padding: 8px 32px 32px;">
+          <div style="display:grid; gap: 14px;">
+            <div style="border: var(--hair); border-radius: 4px; padding: 18px 20px;">
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">[ G-01 ] &nbsp;Weekly distance</span><span style="color:var(--field)">ON TRACK</span></div>
+              <div style="display:flex; justify-content: space-between; align-items: end; margin-top: 10px;">
+                <div style="font-size: 36px; letter-spacing: -0.02em; font-weight: 600;">124<small style="font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px;">/ 200 km</small></div>
+                <div class="mono" style="color: var(--muted);">2 DAYS LEFT</div>
+              </div>
+              <div style="height: 6px; background: var(--bone-2); border-radius: 999px; margin-top: 12px;"><div style="width:62%; height:100%; background: var(--ink); border-radius: 999px;"></div></div>
+            </div>
+            <div style="border: var(--hair); border-radius: 4px; padding: 18px 20px;">
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">[ G-02 ] &nbsp;Yearly elevation</span><span style="color:var(--sun)">BEHIND BY 4%</span></div>
+              <div style="display:flex; justify-content: space-between; align-items: end; margin-top: 10px;">
+                <div style="font-size: 36px; letter-spacing: -0.02em; font-weight: 600;">68.4k<small style="font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px;">/ 150k m</small></div>
+                <div class="mono" style="color: var(--muted);">157 DAYS LEFT</div>
+              </div>
+              <div style="height: 6px; background: var(--bone-2); border-radius: 999px; margin-top: 12px;"><div style="width:45%; height:100%; background: var(--sun); border-radius: 999px;"></div></div>
+            </div>
+            <div style="border: var(--hair); border-radius: 4px; padding: 18px 20px;">
+              <div style="display:flex; justify-content: space-between;" class="mono"><span style="color:var(--ink)">[ G-03 ] &nbsp;20-min power</span><span style="color:var(--field)">PR THIS MONTH</span></div>
+              <div style="display:flex; justify-content: space-between; align-items: end; margin-top: 10px;">
+                <div style="font-size: 36px; letter-spacing: -0.02em; font-weight: 600;">248<small style="font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px;">/ 260 W</small></div>
+                <div class="mono" style="color: var(--muted);">95% TO TARGET</div>
+              </div>
+              <div style="height: 6px; background: var(--bone-2); border-radius: 999px; margin-top: 12px;"><div style="width:95%; height:100%; background: var(--crimson); border-radius: 999px;"></div></div>
+            </div>
+            <a class="btn ghost" href="#" style="justify-content: center; padding: 10px;">Add a goal +</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mock">
+        <div class="chrome"><div class="dots"><span></span><span></span><span></span></div><div class="url">kadence.app / settings</div><div class="mono" style="color: var(--muted);">[ 07-G ]</div></div>
+        <div style="padding: 32px 32px 16px;">
+          <div class="mono" style="color: var(--muted);">[ 06 ] &nbsp;Settings</div>
+          <div style="font-size: 56px; line-height: 0.95; letter-spacing: -0.03em; font-weight: 600; margin-top: 6px;">Preferences,<br><em class="serif" style="color: var(--crimson); font-weight: 400;">in plain view.</em></div>
+        </div>
+        <div style="padding: 8px 0 0;">
+          <div style="border-top: var(--hair);">
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-01 ] UNITS</div>
+              <div>Distance &amp; speed</div>
+              <div style="display:flex; gap: 4px; justify-content: flex-end;"><span class="pill ink">KM</span><span class="pill">MI</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-02 ] ELEVATION</div>
+              <div>Vertical unit</div>
+              <div style="display:flex; gap: 4px; justify-content: flex-end;"><span class="pill ink">M</span><span class="pill">FT</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-03 ] APPEARANCE</div>
+              <div>Theme</div>
+              <div style="display:flex; gap: 4px; justify-content: flex-end;"><span class="pill ink">LIGHT</span><span class="pill">NIGHT</span><span class="pill">AUTO</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-04 ] FTP</div>
+              <div>For power zones</div>
+              <div style="text-align:right;" class="mono"><b style="color:var(--ink)">260</b> W</div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-05 ] MAX HR</div>
+              <div>For HR zones</div>
+              <div style="text-align:right;" class="mono"><b style="color:var(--ink)">188</b> BPM</div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-06 ] WEATHER</div>
+              <div>Open-Meteo historical lookup</div>
+              <div style="display:flex; gap: 4px; justify-content: flex-end;"><span class="pill ink">ON</span><span class="pill">OFF</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--muted);">[ S-07 ] EXPORT</div>
+              <div>Download all rides as JSON</div>
+              <div style="text-align:right;"><a class="btn ghost" href="#" style="padding: 5px 10px;">Export →</a></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 240px 1fr 120px; padding: 16px 32px; border-bottom: var(--hair); align-items: center;">
+              <div class="mono" style="color: var(--crimson);">[ S-08 ] DANGER</div>
+              <div>Delete archive</div>
+              <div style="text-align:right;"><a class="btn ghost" href="#" style="padding: 5px 10px; color: var(--crimson); border-color: var(--crimson);">Delete</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</div>
+
+<!-- SECTION 08 — DATA VIZ -->
+<div class="doc">
+<section class="sec" id="viz">
+  <div class="sec-head">
+    <div class="ix">[ 08 ]<br><span style="color:var(--muted)">VIZ</span></div>
+    <h2>Charts that<br><em>behave themselves.</em></h2>
+    <div class="desc body">One hue per metric, one stroke style per kind, and tooltips that read like captions, not popovers.</div>
+  </div>
+  <div class="sec-body">
+    <div class="row" style="gap: 24px;">
+      <div class="span-6 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 08-A ] &nbsp;Line &amp; area styles</span><span>By metric</span></div>
+        <div class="frame-b">
+          <table class="rides" style="font-size: 13px;">
+            <thead><tr><th>METRIC</th><th>HUE</th><th>STROKE</th><th>FILL</th><th>NOTES</th></tr></thead>
+            <tbody>
+              <tr><td>Elevation</td><td><span style="display:inline-block; width: 16px; height: 8px; background: var(--field);"></span> Field</td><td>1.5 px solid</td><td>12% fill</td><td>Always area</td></tr>
+              <tr><td>Speed</td><td><span style="display:inline-block; width: 16px; height: 8px; background: var(--cobalt);"></span> Cobalt</td><td>2 px solid</td><td>none</td><td>Line only</td></tr>
+              <tr><td>Heart rate</td><td><span style="display:inline-block; width: 16px; height: 8px; background: var(--crimson);"></span> Crimson</td><td>2 px solid</td><td>none</td><td>Z-band shading optional</td></tr>
+              <tr><td>Power</td><td><span style="display:inline-block; width: 16px; height: 8px; background: var(--sun);"></span> Sun</td><td>bar (1 s avg)</td><td>50% alpha</td><td>Bars, not line</td></tr>
+              <tr><td>Cadence</td><td><span style="display:inline-block; width: 16px; height: 8px; background: var(--slate);"></span> Slate</td><td>1.5 px dotted</td><td>none</td><td>Quiet companion</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="span-6 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 08-B ] &nbsp;Axis, tooltip, empty state</span><span>Conventions</span></div>
+        <div class="frame-b">
+          <!-- example tooltip card -->
+          <div style="border: 1px solid var(--ink); background: var(--bone); padding: 12px 14px; border-radius: 3px; max-width: 320px;">
+            <div class="mono" style="color: var(--muted);">[ KM 16.4 ] &nbsp;TUESDAY HILL LOOP</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; margin-top: 8px; font-family: var(--f-mono); font-size: 12px;">
+              <span style="color:var(--muted)">ELEV</span><span style="text-align:right; color:var(--field);"><b>248 m</b></span>
+              <span style="color:var(--muted)">SPEED</span><span style="text-align:right; color:var(--cobalt);"><b>14.2 km/h</b></span>
+              <span style="color:var(--muted)">HR</span><span style="text-align:right; color:var(--crimson);"><b>172 bpm</b></span>
+              <span style="color:var(--muted)">POWER</span><span style="text-align:right; color:#9C7220;"><b>298 W</b></span>
+            </div>
+          </div>
+          <p class="small" style="margin: 16px 0 8px; color: var(--carbon);">Axes — JetBrains Mono 10–11px, hairline rules at the baseline and one above, no gridlines on minor ticks. X labels read in <span class="num">KM</span>, never time, unless the chart is a calendar.</p>
+          <p class="small" style="margin: 0; color: var(--carbon);">Empty state — a single hairline rule, the metric label, and the line "<em class="serif">No rides yet. Drop a GPX to start the line.</em>"</p>
+          <p class="small" style="margin: 16px 0 0; color: var(--carbon);">Map ↔ chart link — hovering a chart point pulses a crimson dot on the route; clicking pins it both ways. Brushing on the chart highlights the matching map segment in crimson.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 09 — MOTION -->
+<div class="doc">
+<section class="sec" id="motion">
+  <div class="sec-head">
+    <div class="ix">[ 09 ]<br><span style="color:var(--muted)">MOTION</span></div>
+    <h2>Subtle, not<br><em>showy.</em></h2>
+    <div class="desc body">Motion is reserved for moments that reward it — first paint of a route, upload progress, transitioning into a ride. Never on hover, never decorative.</div>
+  </div>
+  <div class="sec-body">
+    <div class="row" style="gap: 24px;">
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-01 ]</span><span>0.6s</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Page transition</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">A 1px crimson rule sweeps right-to-left across the top, leaving the new content composed beneath. No fades, no slides of cards.</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-02 ]</span><span>1.2s</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Route draw-on</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">When an activity opens, the route line traces from start to end using SVG <span class="num">stroke-dashoffset</span>. Markers fade in at completion.</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-03 ]</span><span>parse</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Upload progress</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">Counter ticks up as trackpoints are extracted — <span class="num">04210 / 08442</span>. Numbers in JetBrains Mono so widths don't jitter.</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-04 ]</span><span>hover</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Hover states</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">Table rows tint to paper. Buttons invert ink ↔ bone. Chart points show a 1.5px crimson ring. Maps brighten the route by 12%.</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-05 ]</span><span>always</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Ticker</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">The single piece of always-on motion. 18–50s loop depending on width. Pauses on focus (a11y).</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-06 ]</span><span>0.18s</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Chart hover</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">Vertical crosshair snaps to the nearest trackpoint, dot pulses once, tooltip cross-fades. No springs.</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-07 ]</span><span>map</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Map interaction</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;">Pan/zoom unaffected. Selecting a chart point eases the map to that coord at 600ms with the camera offset 100px so the popover never covers the segment.</p>
+        </div>
+      </div>
+      <div class="span-3 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ M-08 ]</span><span>respect</span></div>
+        <div class="frame-b">
+          <div style="font-weight: 600;">Reduced motion</div>
+          <p class="small" style="color: var(--carbon); margin: 8px 0 0;"><span class="num">prefers-reduced-motion: reduce</span> kills the ticker, the route draw-on, and the map ease. Everything still works.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 10 — PORTFOLIO -->
+<div class="doc">
+<section class="sec" id="portfolio">
+  <div class="sec-head">
+    <div class="ix">[ 10 ]<br><span style="color:var(--muted)">PORTFOLIO</span></div>
+    <h2>Built to be<br><em>seen.</em></h2>
+    <div class="desc body">Notes on demoing this for a portfolio: which rides to seed, which screenshots to lead with, the case-study shape, and the accessibility floor.</div>
+  </div>
+  <div class="sec-body">
+    <div class="row" style="gap: 24px;">
+
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 10-A ] &nbsp;Demo data</span><span>Seed once, look real</span></div>
+        <div class="frame-b">
+          <ul style="margin:0; padding: 0; list-style: none; display:grid; gap: 8px; font-size: 14px;">
+            <li><span class="num" style="color: var(--muted);">01 ·</span> Seed <b>52 weeks</b> of rides for one fictional rider — vary distance 12–96 km, two rest weeks, one PR week.</li>
+            <li><span class="num" style="color: var(--muted);">02 ·</span> Use <b>real public GPX traces</b> (OSM cycling, Strava public segments) — terrain looks honest.</li>
+            <li><span class="num" style="color: var(--muted);">03 ·</span> Include <b>one bad upload</b> (route file with no trackpoints) so the error state is reachable.</li>
+            <li><span class="num" style="color: var(--muted);">04 ·</span> Pin a <b>"latest ride"</b> from yesterday's date so the dashboard reads alive.</li>
+            <li><span class="num" style="color: var(--muted);">05 ·</span> Provide a <b>"reset demo"</b> button in settings.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 10-B ] &nbsp;README screenshots</span><span>Order matters</span></div>
+        <div class="frame-b">
+          <ul style="margin:0; padding: 0; list-style: none; display:grid; gap: 8px; font-size: 14px;">
+            <li><span class="num" style="color: var(--muted);">01 ·</span> Hero — the landing, full-bleed, dark on bone.</li>
+            <li><span class="num" style="color: var(--muted);">02 ·</span> Dashboard at "Week 23" — the editorial header + 4-up stats + ride table.</li>
+            <li><span class="num" style="color: var(--muted);">03 ·</span> Activity detail with route drawn, climbs highlighted.</li>
+            <li><span class="num" style="color: var(--muted);">04 ·</span> Upload preview screen — the moment that proves it parses.</li>
+            <li><span class="num" style="color: var(--muted);">05 ·</span> Trends 52-week bars, including the rolling average.</li>
+            <li><span class="num" style="color: var(--muted);">06 ·</span> One <b>dark mode</b> view (activity at night).</li>
+            <li><span class="num" style="color: var(--muted);">07 ·</span> One <b>error state</b> — so the polish reads beyond happy path.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="span-4 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 10-C ] &nbsp;Case study shape</span><span>For your site</span></div>
+        <div class="frame-b">
+          <ol style="margin:0; padding-left: 18px; display:grid; gap: 8px; font-size: 14px;">
+            <li><b>Brief.</b> One paragraph — why GPX, why editorial.</li>
+            <li><b>References.</b> The three sites + your DNA notes.</li>
+            <li><b>System.</b> The palette, type, motifs — show this spec.</li>
+            <li><b>Build.</b> Page-by-page, with screenshots and one short clip of the upload + route-draw-on.</li>
+            <li><b>Edges.</b> Empty state, error state, dark mode, reduced motion.</li>
+            <li><b>What I learned.</b> One honest paragraph on what was harder than expected (probably the elevation parsing).</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="frame" style="margin-top: 24px;">
+      <div class="frame-h"><span>[ 10-D ] &nbsp;Accessibility floor</span><span>Non-negotiable</span></div>
+      <div class="frame-b">
+        <div class="row" style="grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+          <div>
+            <div class="mono" style="color: var(--muted);">CONTRAST</div>
+            <p class="small" style="margin: 8px 0 0;">Ink/Bone <b>16.4:1</b>, Carbon/Bone <b>11.2:1</b>. Crimson on bone hits AA Large only — never used for body text. Sun on bone needs ink underlining for AA.</p>
+          </div>
+          <div>
+            <div class="mono" style="color: var(--muted);">KEYBOARD</div>
+            <p class="small" style="margin: 8px 0 0;">Every interactive surface — chart points, table rows, map markers — focusable, with a 2px crimson focus ring offset by 2px from the element. Tab order follows reading order.</p>
+          </div>
+          <div>
+            <div class="mono" style="color: var(--muted);">DATA</div>
+            <p class="small" style="margin: 8px 0 0;">Every chart pairs with a hidden, screen-reader-only table of the same data. Maps have a text "ride description" alt. Color is never the only differentiator.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- SECTION 11 — HANDOFF -->
+<div class="doc">
+<section class="sec" id="handoff">
+  <div class="sec-head">
+    <div class="ix">[ 11 ]<br><span style="color:var(--muted)">HANDOFF</span></div>
+    <h2>For Claude Code,<br><em>practically.</em></h2>
+    <div class="desc body">Everything below is build-ready. Stack, components, page order, schema, integrations, and a git workflow you can paste verbatim into the next prompt.</div>
+  </div>
+  <div class="sec-body">
+
+    <div class="row" style="gap: 24px;">
+      <div class="span-6 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 11-A ] &nbsp;Stack</span><span>As briefed</span></div>
+        <div class="frame-b">
+          <table class="rides">
+            <thead><tr><th>LAYER</th><th>CHOICE</th><th>NOTES</th></tr></thead>
+            <tbody>
+              <tr><td>Framework</td><td>Next.js (App Router)</td><td>RSC where it pays, client only for charts/map.</td></tr>
+              <tr><td>Language</td><td>TypeScript</td><td>strict: true. Zod for GPX parsing schema.</td></tr>
+              <tr><td>Styling</td><td>Tailwind CSS + CSS vars</td><td>Tokens from this spec mapped to Tailwind theme.</td></tr>
+              <tr><td>UI primitives</td><td>shadcn/ui</td><td>Override defaults to bone/ink — don't ship slate.</td></tr>
+              <tr><td>Map</td><td>MapLibre GL JS + OSM tiles</td><td>Custom monochrome style — see <span class="num">/styles/kadence-map.json</span>.</td></tr>
+              <tr><td>Geo</td><td>Turf.js</td><td>Distance, bearings, climb detection.</td></tr>
+              <tr><td>Charts</td><td>Recharts</td><td>Tremor optional for layout shells.</td></tr>
+              <tr><td>Auth</td><td>Supabase Auth</td><td>Email magic link, no socials.</td></tr>
+              <tr><td>DB</td><td>Supabase Postgres + RLS</td><td>One archive per user, strict row-level.</td></tr>
+              <tr><td>Storage</td><td>Supabase Storage</td><td>Bucket <span class="num">gpx/</span>, private by default.</td></tr>
+              <tr><td>Weather</td><td>Open-Meteo (historical)</td><td>Server-side fetch keyed by ride start coords + time.</td></tr>
+              <tr><td>Routing extras</td><td>OpenRouteService (later)</td><td>Future "plan a route" — not v1.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="span-6 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 11-B ] &nbsp;Components</span><span>~28 modules</span></div>
+        <div class="frame-b">
+          <div class="row" style="grid-template-columns: 1fr 1fr; gap: 8px 24px; font-family: var(--f-mono); font-size: 12px; line-height: 1.6;">
+            <div>
+              <div style="color: var(--muted);">LAYOUT</div>
+              · AppShell<br>
+              · Sidebar<br>
+              · TopBar<br>
+              · Ticker<br>
+              · SectionHeader<br>
+              · IndexLabel<br>
+              · PageCounter<br>
+              · Colofon
+            </div>
+            <div>
+              <div style="color: var(--muted);">CONTROLS</div>
+              · Button (pill, ghost, solid, crimson)<br>
+              · Pill / Badge<br>
+              · BracketLink<br>
+              · UnitToggle<br>
+              · GoalForm<br>
+              · Dropzone<br>
+              · DateRangePicker
+            </div>
+            <div>
+              <div style="color: var(--muted);">DATA</div>
+              · StatCard<br>
+              · StatRow (4-up)<br>
+              · MetricBlock (2x2)<br>
+              · RidesTable<br>
+              · SplitsTable<br>
+              · BestEffortCard<br>
+              · GoalCard + Dial
+            </div>
+            <div>
+              <div style="color: var(--muted);">VIZ &amp; MAP</div>
+              · RouteMap<br>
+              · ElevationProfile<br>
+              · SpeedChart<br>
+              · HeartRateChart<br>
+              · PowerBars<br>
+              · CadenceChart<br>
+              · WeeklyVolumeBars<br>
+              · EffortDistribution
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame" style="margin-top: 24px;">
+      <div class="frame-h"><span>[ 11-C ] &nbsp;Build order</span><span>One page at a time</span></div>
+      <div class="frame-b">
+        <table class="rides">
+          <thead><tr><th style="width: 50px;">#</th><th>STEP</th><th>BLOCKERS</th><th>COMMIT</th></tr></thead>
+          <tbody>
+            <tr><td class="num">01</td><td>Scaffold Next.js + Tailwind + tokens. Drop in Space Grotesk, Instrument Serif, JetBrains Mono. Build <b>AppShell</b>, <b>Sidebar</b>, <b>TopBar</b>, <b>Ticker</b>.</td><td>—</td><td><span class="num">chore: scaffold</span></td></tr>
+            <tr><td class="num">02</td><td>Supabase: project, RLS-on tables, magic-link auth, sign-in screen. Land the <b>landing</b> page.</td><td>Supabase keys</td><td><span class="num">feat(auth): magic link</span></td></tr>
+            <tr><td class="num">03</td><td>GPX parser (server action) + Zod schema. Storage bucket + signed-URL flow. <b>Upload</b> page with 5 states.</td><td>—</td><td><span class="num">feat(upload): gpx parse + states</span></td></tr>
+            <tr><td class="num">04</td><td>Compute pipeline (distance, time, splits, climbs via Turf, gain/loss). <b>Activity detail</b> shell with route + elevation only.</td><td>—</td><td><span class="num">feat(activity): metrics + map</span></td></tr>
+            <tr><td class="num">05</td><td>Add speed / HR / power / cadence charts. Link chart hover ↔ map marker. <b>Dashboard</b> with 4-up stats + recent rides table.</td><td>—</td><td><span class="num">feat(viz): charts + linking</span></td></tr>
+            <tr><td class="num">06</td><td><b>Trends</b> + <b>Goals</b> + <b>Settings</b>. Open-Meteo lookup server route + caching.</td><td>Open-Meteo</td><td><span class="num">feat(trends,goals,settings)</span></td></tr>
+            <tr><td class="num">07</td><td>Empty + error states across all pages. Dark mode. Reduced-motion checks. A11y pass.</td><td>—</td><td><span class="num">polish(a11y,modes)</span></td></tr>
+            <tr><td class="num">08</td><td>Seed script (52 weeks of fake rides). README screenshots. Deploy.</td><td>—</td><td><span class="num">chore(seed): demo data</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="row" style="gap: 24px; margin-top: 24px;">
+      <div class="span-7 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 11-D ] &nbsp;Database entities</span><span>Postgres · 6 tables</span></div>
+        <div class="frame-b">
+          <pre style="margin:0; font-family: var(--f-mono); font-size: 12px; line-height: 1.6; color: var(--ink); overflow:auto;">
+profile          ( id · email · display_name · units · theme · ftp · max_hr · created_at )
+ride             ( id · profile_id · name · started_at · timezone · sport · source_app · gpx_path · created_at )
+ride_metric      ( ride_id ★ · distance_m · moving_s · elapsed_s · elev_gain_m · elev_loss_m
+                  · avg_speed · max_speed · avg_hr · max_hr · avg_power · np · avg_cadence
+                  · start_lat · start_lng · end_lat · end_lng )
+trackpoint       ( ride_id · idx · t · lat · lng · elev · speed · hr · power · cadence )  -- compressed JSONB or table-partitioned
+split            ( ride_id · km · time_s · pace · elev_gain · avg_power · avg_hr )
+climb            ( id · ride_id · start_km · end_km · length_m · avg_grade · category · peak_elev )
+goal             ( id · profile_id · kind · target · period · period_start · period_end · last_progress )
+weather_snapshot ( ride_id ★ · temp_c · wind_kmh · wind_dir · precip_mm · uv · cloud · source )</pre>
+          <p class="small" style="color: var(--carbon); margin-top: 12px;">RLS: every <span class="num">profile_id = auth.uid()</span>. Trackpoints are heavy — partition by ride_id or store as compressed JSONB depending on query needs. ★ = one-to-one with ride.</p>
+        </div>
+      </div>
+
+      <div class="span-5 frame" style="padding: 0;">
+        <div class="frame-h"><span>[ 11-E ] &nbsp;Integrations</span><span>Server-only keys</span></div>
+        <div class="frame-b">
+          <ul style="margin:0; padding: 0; list-style:none; display:grid; gap: 12px; font-size: 14px;">
+            <li><b>Open-Meteo</b> — <span class="num">/api/weather?lat&amp;lng&amp;t</span>. No key. Cache 24h by rounded-down hour + 0.01° grid.</li>
+            <li><b>MapLibre + OSM</b> — self-host the style JSON, raster tiles from OpenStreetMap with a clear attribution in <span class="num">[ MAP ]</span> corner label.</li>
+            <li><b>OpenRouteService</b> — <i>future</i>. Wrap behind a server route to keep the key off the client.</li>
+            <li><b>Supabase</b> — magic link only. Service role used only in server actions for the parse pipeline.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame" style="margin-top: 24px;">
+      <div class="frame-h"><span>[ 11-F ] &nbsp;Git workflow</span><span>For Claude Code</span></div>
+      <div class="frame-b">
+        <pre style="margin:0; font-family: var(--f-mono); font-size: 12px; line-height: 1.65; color: var(--ink); overflow: auto;">
+1.  git init                       # first thing, always
+2.  add a .gitignore that excludes — node_modules, .next, .vercel, .env*, .DS_Store, dist, build, .cache
+3.  first commit after scaffold:   chore: scaffold next.js + tailwind + tokens
+4.  after every milestone above, run:  pnpm lint && pnpm typecheck && pnpm test
+    then commit with a conventional-style message:
+       feat(activity): route map + elevation profile
+       fix(upload): handle gpx with no &lt;ele&gt;
+       refactor(charts): extract recharts theme
+       chore(seed): add 52-week demo archive
+5.  NEVER commit — .env files, API keys, service-role keys,
+    Supabase database URLs, node_modules, build outputs, local caches,
+    or any test GPX containing personally-identifying coordinates.
+6.  Use one branch per page from build-order ( feat/upload, feat/activity, ... ),
+    PR title = the commit message, body = one screenshot per state shipped.</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+</div>
+
+<!-- COLOFON -->
+<div class="doc">
+  <div class="colofon">
+    <div>
+      <div class="big">Kadence,<br><em>composed.</em></div>
+      <div class="mono" style="margin-top: 16px;">END · DESIGN SPEC v0.1 · 06/2026</div>
+    </div>
+    <div style="text-align:right;">
+      <div>SET IN SPACE GROTESK,<br>INSTRUMENT SERIF, JETBRAINS MONO</div>
+      <div style="margin-top: 14px;">REFERENCES — HELLOHELLO.IS,<br>OUTFIT.HELLOHELLO.IS, MARINKURIR.COM</div>
+      <div style="margin-top: 14px;">NEXT — <span style="color: var(--ink);"><b>hand off to Claude Code →</b></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tweaks panel mount -->
+<div id="tweaks-mount"></div>
+
+<!-- Night mode + tweak overrides -->
+<style id="kadence-tweak-overrides">
+  body.night{
+    background: var(--night);
+    color: var(--night-ink);
+  }
+  body.night .topbar{ background: var(--night); border-bottom-color: #2A2620; }
+  body.night .topbar a{ color: var(--night-ink); }
+  body.night .topbar .clock{ color: #6D6657; }
+  body.night .hero{ border-bottom-color: var(--night-ink); }
+  body.night .hero .display{ color: var(--night-ink); }
+  body.night .sec-head{ border-bottom-color: var(--night-ink); }
+  body.night .sec-head h2{ color: var(--night-ink); }
+  body.night .sec-head .desc{ color: #B3AC9D; }
+  body.night .body, body.night .body-lg, body.night .small, body.night .dna-card ul, body.night p{ color: #C0BAA9; }
+  body.night .frame, body.night .dna-card{ background: var(--night-2); border-color: #2A2620; }
+  body.night .frame .frame-h{ border-bottom-color: #2A2620; color: #8C8678; }
+  body.night .label, body.night .mono{ color: #8C8678; }
+  body.night hr.hair{ border-top-color: #2A2620; }
+  body.night .ticker{ background: #0A0907; color: var(--night-ink); border-color: #2A2620; }
+  body.night .sw .meta{ background: var(--night-2); color: var(--night-ink); }
+  body.night .mode-card.light{ background: var(--night-2); color: var(--night-ink); }
+  body.night .mock{ background: var(--night); border-color: #3A3530; }
+  body.night .mock .chrome{ background: var(--night-2); border-bottom-color: #2A2620; color: #8C8678; }
+  body.night .mock-app .side{ background: var(--night); border-right-color: #2A2620; }
+  body.night .mock-app .side nav a{ color: #B3AC9D; }
+  body.night .mock-app .side nav a.active{ background: var(--night-ink); color: var(--night); }
+  body.night .mock-app .main{ background: var(--night); }
+  body.night .app-top, body.night .app-title, body.night .stat-row, body.night .panel, body.night .dash-grid > div{ border-color: #2A2620; }
+  body.night .app-top .crumb, body.night .app-title h1, body.night .stat-cell .v{ color: var(--night-ink); }
+  body.night table.rides th, body.night table.rides td{ border-bottom-color: #2A2620; }
+  body.night table.rides td .ti{ color: var(--night-ink); }
+  body.night table.rides tr:hover td{ background: var(--night-2); }
+  body.night .activity{ background: var(--night); border-color: #3A3530; }
+  body.night .activity .head > div{ border-right-color: #2A2620; }
+  body.night .activity .head h1{ color: var(--night-ink); }
+  body.night .map{
+    background:
+      radial-gradient(900px 500px at 30% 30%, #1F1B14 0%, transparent 60%),
+      radial-gradient(700px 380px at 70% 70%, #15120D 0%, transparent 60%),
+      #100D08;
+  }
+  body.night .map svg path[stroke="#15140F"]{ stroke: var(--night-ink); }
+  body.night .map svg circle[fill="#15140F"]{ fill: var(--night-ink); }
+  body.night .map svg text[fill="#15140F"]{ fill: var(--night-ink); }
+  body.night .map svg path[fill="#D7CFBA"]{ fill: #2A2620; }
+  body.night .map svg path[fill="#CFC5AE"]{ fill: #1F1B14; }
+  body.night .btn{ border-color: var(--night-ink); color: var(--night-ink); }
+  body.night .btn:hover{ background: var(--night-ink); color: var(--night); }
+  body.night .btn.solid{ background: var(--night-ink); color: var(--night); }
+  body.night .btn.ghost{ border-color: #3A3530; color: #B3AC9D; }
+  body.night input{ color: var(--night-ink); border-color: var(--night-ink) !important; }
+  body.night .pill{ border-color: #3A3530; color: #B3AC9D; }
+  body.night .pill.ink{ background: var(--night-ink); color: var(--night); border-color: var(--night-ink); }
+
+  body.no-ticker .ticker{ display: none !important; }
+  body.no-ticker [class*="ticker-track"]{ animation: none; }
+</style>
+
+<!-- React + Babel for Tweaks panel only -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="tweaks-app.jsx"></script>
+
+<script>
+  // simple Montevideo-style clock
+  function tick(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const el = document.getElementById('clock');
+    if(el) el.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Kadence tokens — Design Spec § 03–05.
+ * Semantic roles are stored as HSL channels so shadcn/ui components re-skin in
+ * `.night` mode. Raw editorial hues live alongside for charts + marks.
+ */
+@layer base {
+  :root {
+    /* shadcn semantic roles — light (bone / ink) */
+    --background: 43 54% 97%; /* paper  #FCFAF5 */
+    --foreground: 50 17% 7%; /* ink    #15140F */
+    --card: 43 33% 96%; /* bone   #F8F6F1 */
+    --card-foreground: 50 17% 7%;
+    --popover: 43 54% 97%;
+    --popover-foreground: 50 17% 7%;
+    --primary: 6 68% 45%; /* crimson #C13525 */
+    --primary-foreground: 43 33% 96%;
+    --secondary: 43 28% 90%; /* bone-2 #EDE9DF */
+    --secondary-foreground: 50 17% 7%;
+    --muted: 43 28% 90%;
+    --muted-foreground: 42 8% 51%; /* muted  #8C8678 */
+    --accent: 43 28% 90%;
+    --accent-foreground: 50 17% 7%;
+    --destructive: 6 68% 45%;
+    --destructive-foreground: 43 33% 96%;
+    --border: 41 19% 74%; /* hairline #C9C1B0 */
+    --input: 41 19% 74%;
+    --ring: 6 68% 45%;
+
+    /* editorial palette */
+    --paper: 43 54% 97%;
+    --bone: 43 33% 96%;
+    --bone-2: 43 28% 90%;
+    --ink: 50 17% 7%;
+    --carbon: 43 9% 15%;
+    --hairline: 41 19% 74%;
+    --crimson: 6 68% 45%;
+    --crimson-ink: 7 77% 31%;
+    --cobalt: 226 65% 43%;
+    --field: 91 37% 27%;
+    --slate: 212 18% 36%;
+    --sun: 41 70% 51%;
+
+    /* radii — Design Spec § 03 */
+    --radius: 0.5rem; /* 8px button/input */
+    --r-card: 4px;
+    --r-pill: 999px;
+  }
+
+  .night {
+    /* shadcn semantic roles — night (#100F0C / #ECE6D8) */
+    --background: 45 14% 5%; /* night    #100F0C */
+    --foreground: 42 34% 89%; /* night-ink #ECE6D8 */
+    --card: 40 13% 9%; /* night-2  #1A1814 */
+    --card-foreground: 42 34% 89%;
+    --popover: 40 13% 9%;
+    --popover-foreground: 42 34% 89%;
+    --primary: 6 68% 45%;
+    --primary-foreground: 42 34% 89%;
+    --secondary: 36 14% 15%; /* border-night #2A2620 */
+    --secondary-foreground: 42 34% 89%;
+    --muted: 40 13% 9%;
+    --muted-foreground: 41 13% 66%; /* muted-2 #B3AC9D */
+    --accent: 36 14% 15%;
+    --accent-foreground: 42 34% 89%;
+    --destructive: 6 68% 45%;
+    --destructive-foreground: 42 34% 89%;
+    --border: 36 14% 15%;
+    --input: 36 14% 15%;
+    --ring: 6 68% 45%;
+
+    /* editorial palette — night remap */
+    --paper: 45 14% 5%;
+    --bone: 40 13% 9%;
+    --bone-2: 36 14% 15%;
+    --ink: 42 34% 89%;
+    --carbon: 42 34% 89%;
+    --hairline: 36 14% 15%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    line-height: 1.4;
+  }
+
+  /* Tabular numerals everywhere figures appear — editorial precision. */
+  .num,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Editorial type utilities — Design Spec § 05.
+ * Kept as composable classes so RSC markup reads like the static design spec.
+ */
+@layer components {
+  .display {
+    @apply font-sans font-bold;
+    font-size: clamp(48px, 9vw, 112px);
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+  }
+  .display em {
+    @apply font-serif text-crimson;
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+  .label {
+    @apply font-mono uppercase text-muted-foreground;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+  .mono-tag {
+    @apply font-mono uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .serif {
+    @apply font-serif;
+    font-style: italic;
+  }
+  .hairline {
+    @apply border-hairline;
+  }
+}

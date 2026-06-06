@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+.next
+out
+build
+coverage
+node_modules
+next-env.d.ts
+playwright-report
+test-results
+drizzle
+docs/Kadence - Design Spec.html
+public
