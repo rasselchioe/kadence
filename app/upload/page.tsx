@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { UploadClient } from "@/components/upload/upload-client";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export const metadata: Metadata = { title: "Upload" };
 
@@ -8,14 +9,17 @@ export default function UploadPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12 md:px-12">
       <div className="mx-auto flex max-w-5xl flex-col gap-10">
-        <header className="flex items-baseline justify-between border-b border-hairline pb-4">
+        <header className="flex items-center justify-between border-b border-hairline pb-4">
           <Link
             href="/"
             className="mono-tag text-foreground transition-colors hover:text-crimson"
           >
             ← Kadence
           </Link>
-          <span className="label">[ upload ]</span>
+          <div className="flex items-center gap-4">
+            <span className="label">[ upload ]</span>
+            <ThemeToggle />
+          </div>
         </header>
 
         <div className="flex flex-col gap-4">

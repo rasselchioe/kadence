@@ -14,10 +14,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   useEffect(() => {
     const sync = () =>
-      setTheme(document.body.classList.contains("night") ? "dark" : "light");
+      setTheme(document.documentElement.classList.contains("night") ? "dark" : "light");
     sync();
     const observer = new MutationObserver(sync);
-    observer.observe(document.body, {
+    observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });

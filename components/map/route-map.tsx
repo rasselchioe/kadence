@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { RideSample } from "@/lib/gpx/preview";
@@ -18,6 +18,12 @@ const EMPTY: GeoJSON.FeatureCollection = {
   features: [],
 };
 
+// Route reads dark on a light map and light on a dark map; markers keep colour.
+const lineColor = (night: boolean) => (night ? palette.nightInk : palette.ink);
+const casingColor = (night: boolean) => (night ? palette.night : palette.paper);
+const rasterSaturation = (night: boolean) => (night ? -0.6 : -0.9);
+const rasterBrightness = (night: boolean) => (night ? 0.55 : 1);
+
 export function RouteMap({
   route,
   samples,
@@ -33,10 +39,22 @@ export function RouteMap({
   const { index, setHover, togglePin } = useSelection();
   const idxRef = useRef(index);
   idxRef.current = index;
+  const [night, setNight] = useState(false);
+
+  // Track the active theme (`.night` on <html>).
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => setNight(el.classList.contains("night"));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   // Initialize the map once.
   useEffect(() => {
     if (!containerRef.current) return;
+    const n0 = document.documentElement.classList.contains("night");
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -57,7 +75,11 @@ export function RouteMap({
             source: "osm",
             // Desaturate the tiles for the bone/ink look; the route + markers
             // stay in colour because they're vector layers on top.
-            paint: { "raster-saturation": -0.9, "raster-opacity": 0.85 },
+            paint: {
+              "raster-saturation": rasterSaturation(n0),
+              "raster-opacity": 0.85,
+              "raster-brightness-max": rasterBrightness(n0),
+            },
           },
         ],
       },
@@ -81,14 +103,14 @@ export function RouteMap({
         type: "line",
         source: "route",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": palette.paper, "line-width": 6 },
+        paint: { "line-color": casingColor(n0), "line-width": 6 },
       });
       map.addLayer({
         id: "route",
         type: "line",
         source: "route",
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": palette.ink, "line-width": 3 },
+        paint: { "line-color": lineColor(n0), "line-width": 3 },
       });
 
       map.addSource("ends", {
@@ -126,7 +148,7 @@ export function RouteMap({
             palette.crimson,
           ],
           "circle-stroke-width": 2,
-          "circle-stroke-color": palette.paper,
+          "circle-stroke-color": casingColor(n0),
         },
       });
 
@@ -139,7 +161,7 @@ export function RouteMap({
           "circle-radius": 6,
           "circle-color": palette.crimson,
           "circle-stroke-width": 2,
-          "circle-stroke-color": palette.paper,
+          "circle-stroke-color": casingColor(n0),
         },
       });
       readyRef.current = true;
@@ -200,6 +222,22 @@ export function RouteMap({
       ],
     });
   }, [index, samples]);
+
+  // Re-theme the map when the user toggles night mode at runtime.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    map.setPaintProperty("route", "line-color", lineColor(night));
+    map.setPaintProperty("route-casing", "line-color", casingColor(night));
+    map.setPaintProperty("ends", "circle-stroke-color", casingColor(night));
+    map.setPaintProperty("cursor", "circle-stroke-color", casingColor(night));
+    map.setPaintProperty("osm", "raster-saturation", rasterSaturation(night));
+    map.setPaintProperty(
+      "osm",
+      "raster-brightness-max",
+      rasterBrightness(night),
+    );
+  }, [night]);
 
   return <div ref={containerRef} className="h-full w-full" />;
 }

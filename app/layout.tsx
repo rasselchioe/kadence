@@ -35,6 +35,10 @@ export const metadata: Metadata = {
   description: "Editorial cycling-analytics for one rider.",
 };
 
+// Sets `.night` on <html> before paint so the chosen theme survives a hard
+// refresh with no flash (Design Spec § 03-B; build spec § 9, § 15).
+const themeInit = `(function(){try{var t=localStorage.getItem('kadence-theme');var d=t?t==='night':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('night');}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         {children}
       </body>
     </html>
