@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 /**
  * Landing placeholder. The full marketing page + magic-link form lands in M1.
  * This exists so the design system (type, color, marks) is verifiable today.
@@ -23,6 +25,15 @@ export default function Home() {
             dashboard — map, elevation, splits, climbs, charts. Private by
             default. No feed, no followers, no leaderboards.
           </p>
+          <Link
+            href="/upload"
+            className="group inline-flex w-fit items-baseline gap-2 border-b border-ink pb-1 font-sans text-lg font-semibold text-foreground transition-colors hover:border-crimson hover:text-crimson"
+          >
+            Drop a GPX
+            <span className="transition-transform group-hover:translate-x-1">
+              →
+            </span>
+          </Link>
         </section>
 
         <footer className="flex flex-wrap gap-6 border-t border-hairline pt-4">
