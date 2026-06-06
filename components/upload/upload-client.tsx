@@ -5,7 +5,7 @@ import { Loader2, MountainSnow, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { PreviewResponse, PreviewRide } from "@/lib/gpx/preview";
-import { ResultsView } from "./results-view";
+import { ActivityView } from "@/components/activity/activity-view";
 
 // Mirrors MAX_GPX_BYTES in lib/gpx/parse.ts (kept inline so the parser's
 // server-only deps don't get pulled into the client bundle).
@@ -96,7 +96,7 @@ export function UploadClient() {
             Parse another
           </Button>
         </div>
-        <ResultsView ride={ride} />
+        <ActivityView ride={ride} />
       </div>
     );
   }

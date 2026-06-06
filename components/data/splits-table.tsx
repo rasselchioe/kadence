@@ -1,8 +1,15 @@
 import type { Split } from "@/lib/gpx/schema";
 import { fmtDuration } from "@/lib/units";
+import { cn } from "@/lib/utils";
 
 /** Per-kilometre splits with a pace bar normalized to the fastest split. */
-export function SplitsTable({ splits }: { splits: Split[] }) {
+export function SplitsTable({
+  splits,
+  highlightKm,
+}: {
+  splits: Split[];
+  highlightKm?: number | null;
+}) {
   if (splits.length === 0) return null;
   const maxPace = Math.max(...splits.map((s) => s.paceKmh));
 
@@ -25,7 +32,13 @@ export function SplitsTable({ splits }: { splits: Split[] }) {
         </thead>
         <tbody>
           {splits.map((s) => (
-            <tr key={s.km} className="border-b border-hairline">
+            <tr
+              key={s.km}
+              className={cn(
+                "border-b border-hairline transition-colors",
+                highlightKm === s.km && "bg-bone-2",
+              )}
+            >
               <td className="tabular py-2 font-mono">
                 {String(s.km).padStart(2, "0")}
               </td>
