@@ -5,6 +5,7 @@ import type {
   Split,
   TrackPoint,
 } from "./schema";
+import type { WeatherData } from "@/lib/weather";
 import { movingAverage } from "./smoothing";
 
 /**
@@ -51,6 +52,8 @@ export interface PreviewRide {
   hasHr: boolean;
   hasPower: boolean;
   hasCad: boolean;
+  /** Weather at the start (stored rides only). */
+  weather?: WeatherData | null;
 }
 
 export type PreviewResponse =

@@ -15,6 +15,7 @@ import {
 import { useUnits } from "@/components/units-provider";
 import { StatGrid, type StatCardProps } from "@/components/data/stat-card";
 import { SplitsTable } from "@/components/data/splits-table";
+import { WeatherCard } from "@/components/data/weather-card";
 import { MetricChart } from "@/components/viz/metric-chart";
 import {
   SelectionProvider,
@@ -145,6 +146,12 @@ function ActivityBody({ ride }: { ride: PreviewRide }) {
       </header>
 
       <StatGrid stats={stats} />
+
+      {ride.weather && (
+        <Frame ix="00" title="Weather">
+          <WeatherCard weather={ride.weather} units={units} />
+        </Frame>
+      )}
 
       <Frame ix="01" title="Route">
         <div className="h-[340px] w-full overflow-hidden rounded-card border border-hairline md:h-[440px]">

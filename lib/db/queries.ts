@@ -20,6 +20,7 @@ import {
   rideMetric,
   rideTrack,
   split,
+  weatherSnapshot,
 } from "./schema";
 
 /**
@@ -118,8 +119,13 @@ export async function getRideDetail(profileId: string, rideId: string) {
     .from(climb)
     .where(eq(climb.rideId, rideId))
     .orderBy(climb.startKm);
+  const [weather] = await db
+    .select()
+    .from(weatherSnapshot)
+    .where(eq(weatherSnapshot.rideId, rideId))
+    .limit(1);
 
-  return { ride: r, metric, track, splits, climbs };
+  return { ride: r, metric, track, splits, climbs, weather };
 }
 
 export async function getProfile(profileId: string) {

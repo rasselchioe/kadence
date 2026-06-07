@@ -7,7 +7,14 @@ import type {
   Split,
   TrackPoint,
 } from "@/lib/gpx/schema";
-import { climb, ride, rideMetric, rideTrack, split } from "./schema";
+import {
+  climb,
+  ride,
+  rideMetric,
+  rideTrack,
+  split,
+  weatherSnapshot,
+} from "./schema";
 
 /** Shape returned by {@link getRideDetail}. */
 export type RideDetail = {
@@ -16,6 +23,7 @@ export type RideDetail = {
   track: typeof rideTrack.$inferSelect | undefined;
   splits: (typeof split.$inferSelect)[];
   climbs: (typeof climb.$inferSelect)[];
+  weather: typeof weatherSnapshot.$inferSelect | undefined;
 };
 
 const ZERO_METRICS: RideMetrics = {
@@ -94,6 +102,18 @@ export function storedRideToView(detail: RideDetail): PreviewRide {
     category: c.category as ClimbCategory,
   }));
 
+  const w = detail.weather;
+  const weather = w
+    ? {
+        tempC: w.tempC,
+        windKmh: w.windKmh,
+        windDirDeg: w.windDirDeg,
+        precipMm: w.precipMm,
+        uv: w.uv,
+        cloudPct: w.cloudPct,
+      }
+    : null;
+
   return {
     fileName: basename(r.gpxStoragePath),
     suggestedName: r.name,
@@ -112,5 +132,6 @@ export function storedRideToView(detail: RideDetail): PreviewRide {
     hasHr: metrics.avgHr != null,
     hasPower: metrics.avgPowerW != null,
     hasCad: metrics.avgCadenceRpm != null,
+    weather,
   };
 }

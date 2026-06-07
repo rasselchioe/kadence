@@ -3,9 +3,13 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getDb } from "@/lib/db";
 import { persistRide } from "@/lib/db/persist";
+import { getProfile } from "@/lib/db/queries";
+import { weatherSnapshot } from "@/lib/db/schema";
 import { MAX_GPX_BYTES, parseGpx } from "@/lib/gpx/parse";
 import { GPX_ERROR_COPY, GpxError } from "@/lib/gpx/schema";
+import { fetchWeather, weatherEnabled } from "@/lib/weather";
 
 export type UploadResult =
   | { ok: true; rideId: string }
@@ -84,6 +88,24 @@ export async function uploadRide(formData: FormData): Promise<UploadResult> {
     await supabase.storage.from("gpx").remove([storagePath]);
     const message = e instanceof Error ? e.message : "Database write failed.";
     return { ok: false, code: "DB", message };
+  }
+
+  // Enrich with weather (non-fatal; respects the per-user + env toggle).
+  try {
+    const profile = await getProfile(user.id);
+    if (weatherEnabled() && profile?.weatherEnabled !== false) {
+      const w = await fetchWeather(
+        parsed.metrics.startLat,
+        parsed.metrics.startLng,
+        parsed.startedAt ?? new Date().toISOString(),
+      );
+      if (w)
+        await getDb()
+          .insert(weatherSnapshot)
+          .values({ rideId, ...w });
+    }
+  } catch {
+    // weather is best-effort
   }
 
   revalidatePath("/dashboard");
