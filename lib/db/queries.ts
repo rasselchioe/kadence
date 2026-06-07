@@ -1,7 +1,26 @@
-import { and, count, desc, eq, gte, sql, type AnyColumn } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  lt,
+  sql,
+  type AnyColumn,
+} from "drizzle-orm";
 import { addWeeks, startOfWeekUTC } from "@/lib/date";
+import { rollingTimeAverage } from "@/lib/gpx/smoothing";
+import type { TrackPoint } from "@/lib/gpx/schema";
 import { getDb } from "./index";
-import { climb, profile, ride, rideMetric, rideTrack, split } from "./schema";
+import {
+  climb,
+  goal,
+  profile,
+  ride,
+  rideMetric,
+  rideTrack,
+  split,
+} from "./schema";
 
 /**
  * Typed read helpers. Drizzle connects over the pooler as a privileged role and
@@ -271,6 +290,90 @@ export async function bestEfforts(profileId: string): Promise<BestEffort[]> {
   add("Longest time", "time", (r) => r.movingS);
   add("Fastest average", "speed", (r) => r.avgSpeedMps);
   add("Best power", "power", (r) => r.npW ?? r.avgPowerW);
+  return out;
+}
+
+export interface GoalProgress {
+  goal: typeof goal.$inferSelect;
+  current: number;
+  pct: number;
+}
+
+/** Best rolling-20-minute power (W) across the user's rides in [start, end). */
+async function bestTwentyMinPower(
+  profileId: string,
+  start: Date,
+  end: Date,
+): Promise<number> {
+  const db = getDb();
+  const tracks = await db
+    .select({ points: rideTrack.points })
+    .from(rideTrack)
+    .innerJoin(ride, eq(ride.id, rideTrack.rideId))
+    .where(
+      and(
+        eq(ride.profileId, profileId),
+        gte(ride.startedAt, start),
+        lt(ride.startedAt, end),
+      ),
+    );
+
+  let best = 0;
+  for (const t of tracks) {
+    const pts = t.points as TrackPoint[];
+    if (!pts.some((p) => p.power != null)) continue;
+    const rolled = rollingTimeAverage(
+      pts.map((p) => p.power),
+      pts.map((p) => p.time),
+      1200,
+    );
+    for (const v of rolled) if (v != null && v > best) best = v;
+  }
+  return Math.round(best);
+}
+
+/** Goals with their progress over the goal's period. */
+export async function getGoalsWithProgress(
+  profileId: string,
+): Promise<GoalProgress[]> {
+  const db = getDb();
+  const goals = await db
+    .select()
+    .from(goal)
+    .where(eq(goal.profileId, profileId))
+    .orderBy(desc(goal.createdAt));
+
+  const out: GoalProgress[] = [];
+  for (const g of goals) {
+    let current = 0;
+    if (g.kind === "power20") {
+      current = await bestTwentyMinPower(profileId, g.periodStart, g.periodEnd);
+    } else {
+      const col =
+        g.kind === "distance"
+          ? rideMetric.distanceM
+          : g.kind === "elevation"
+            ? rideMetric.elevGainM
+            : rideMetric.movingS;
+      const [row] = await db
+        .select({ s: sumReal(col) })
+        .from(ride)
+        .innerJoin(rideMetric, eq(rideMetric.rideId, ride.id))
+        .where(
+          and(
+            eq(ride.profileId, profileId),
+            gte(ride.startedAt, g.periodStart),
+            lt(ride.startedAt, g.periodEnd),
+          ),
+        );
+      current = Number(row?.s ?? 0);
+    }
+    out.push({
+      goal: g,
+      current,
+      pct: g.target > 0 ? Math.min(current / g.target, 1.5) : 0,
+    });
+  }
   return out;
 }
 
