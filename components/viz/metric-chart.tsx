@@ -12,7 +12,9 @@ import {
 } from "recharts";
 import type { RideSample } from "@/lib/gpx/preview";
 import type { Climb } from "@/lib/gpx/schema";
+import { kmToMiles, metersToFeet } from "@/lib/units";
 import { useSelection } from "@/components/activity/selection-context";
+import { useUnits } from "@/components/units-provider";
 
 type MetricKey = "e" | "speed" | "hr" | "power" | "cad";
 
@@ -41,9 +43,24 @@ export function MetricChart({
   height?: number;
 }) {
   const { index, setHover, togglePin } = useSelection();
+  const { units } = useUnits();
+  const imperial = units === "imperial";
   const selected = index != null ? samples[index] : null;
   const selectedVal = selected ? selected[dataKey] : null;
   const gid = `grad-${dataKey}`;
+
+  // Elevation (m) + speed (km/h) samples convert for imperial; the rest pass through.
+  let readoutVal = selectedVal;
+  let readoutUnit = unit;
+  if (selectedVal != null && imperial) {
+    if (dataKey === "e") {
+      readoutVal = metersToFeet(selectedVal);
+      readoutUnit = "ft";
+    } else if (dataKey === "speed") {
+      readoutVal = kmToMiles(selectedVal);
+      readoutUnit = "mph";
+    }
+  }
 
   const onMove = (state: ChartState) => {
     if (state && typeof state.activeTooltipIndex === "number")
@@ -59,8 +76,8 @@ export function MetricChart({
       <div className="flex items-baseline justify-between">
         <span className="label">{label}</span>
         <span className="tabular font-mono text-xs text-foreground">
-          {selectedVal != null
-            ? `${Number(selectedVal).toFixed(precision)} ${unit}`
+          {readoutVal != null
+            ? `${Number(readoutVal).toFixed(precision)} ${readoutUnit}`
             : ""}
         </span>
       </div>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getRidesForProfile } from "@/lib/db/queries";
+import { getProfile, getRidesForProfile } from "@/lib/db/queries";
+import type { UnitSystem } from "@/lib/units";
 import { RidesTable } from "@/components/data/rides-table";
 
 export const metadata: Metadata = { title: "Rides" };
@@ -13,7 +14,11 @@ export default async function RidesPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const rides = await getRidesForProfile(user.id, 200, 0);
+  const [rides, profile] = await Promise.all([
+    getRidesForProfile(user.id, 200, 0),
+    getProfile(user.id),
+  ]);
+  const units = (profile?.units ?? "metric") as UnitSystem;
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,7 +45,7 @@ export default async function RidesPage() {
           </Link>
         </div>
       ) : (
-        <RidesTable rides={rides} />
+        <RidesTable rides={rides} units={units} />
       )}
     </div>
   );

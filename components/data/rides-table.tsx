@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { fmtDuration } from "@/lib/units";
+import {
+  fmtDuration,
+  metersToFeet,
+  metersToKm,
+  metersToMiles,
+  type UnitSystem,
+} from "@/lib/units";
 
 export interface RideRow {
   id: string;
@@ -20,8 +26,15 @@ const fmtDate = (d: Date) =>
     timeZone: "UTC",
   });
 
-export function RidesTable({ rides }: { rides: RideRow[] }) {
+export function RidesTable({
+  rides,
+  units = "metric",
+}: {
+  rides: RideRow[];
+  units?: UnitSystem;
+}) {
   if (rides.length === 0) return null;
+  const imperial = units === "imperial";
 
   return (
     <table className="w-full border-collapse text-sm">
@@ -56,10 +69,15 @@ export function RidesTable({ rides }: { rides: RideRow[] }) {
               {fmtDate(r.startedAt)}
             </td>
             <td className="tabular py-3 text-right">
-              {(r.distanceM / 1000).toFixed(1)} km
+              {(imperial
+                ? metersToMiles(r.distanceM)
+                : metersToKm(r.distanceM)
+              ).toFixed(1)}{" "}
+              {imperial ? "mi" : "km"}
             </td>
             <td className="tabular hidden py-3 text-right sm:table-cell">
-              {Math.round(r.elevGainM)} m
+              {Math.round(imperial ? metersToFeet(r.elevGainM) : r.elevGainM)}{" "}
+              {imperial ? "ft" : "m"}
             </td>
             <td className="tabular hidden py-3 text-right md:table-cell">
               {fmtDuration(r.movingS)}

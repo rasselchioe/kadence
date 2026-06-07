@@ -1,0 +1,1 @@
+ALTER TABLE "profile" ADD COLUMN "weather_enabled" boolean DEFAULT true NOT NULL;

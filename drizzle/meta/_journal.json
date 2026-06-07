@@ -8,6 +8,13 @@
       "when": 1780788905945,
       "tag": "0000_init_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780817487638,
+      "tag": "0001_profile_weather_enabled",
+      "breakpoints": true
     }
   ]
 }

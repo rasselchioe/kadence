@@ -1,6 +1,9 @@
+"use client";
+
 import type { Split } from "@/lib/gpx/schema";
-import { fmtDuration } from "@/lib/units";
+import { fmtDuration, kmToMiles, metersToFeet } from "@/lib/units";
 import { cn } from "@/lib/utils";
+import { useUnits } from "@/components/units-provider";
 
 /** Per-kilometre splits with a pace bar normalized to the fastest split. */
 export function SplitsTable({
@@ -10,6 +13,8 @@ export function SplitsTable({
   splits: Split[];
   highlightKm?: number | null;
 }) {
+  const { units } = useUnits();
+  const imperial = units === "imperial";
   if (splits.length === 0) return null;
   const maxPace = Math.max(...splits.map((s) => s.paceKmh));
 
@@ -20,7 +25,9 @@ export function SplitsTable({
           <tr className="border-b border-ink text-left">
             <th className="label py-2 font-normal">Km</th>
             <th className="label py-2 font-normal">Time</th>
-            <th className="label py-2 font-normal">Pace</th>
+            <th className="label py-2 font-normal">
+              Pace · {imperial ? "mph" : "km/h"}
+            </th>
             <th className="label hidden py-2 font-normal sm:table-cell">
               + Elev
             </th>
@@ -45,7 +52,9 @@ export function SplitsTable({
               <td className="tabular py-2">{fmtDuration(s.timeS)}</td>
               <td className="py-2">
                 <div className="flex items-center gap-2">
-                  <span className="tabular w-14">{s.paceKmh.toFixed(1)}</span>
+                  <span className="tabular w-14">
+                    {(imperial ? kmToMiles(s.paceKmh) : s.paceKmh).toFixed(1)}
+                  </span>
                   <span
                     className="hidden h-1.5 bg-crimson md:inline-block"
                     style={{
@@ -55,7 +64,9 @@ export function SplitsTable({
                 </div>
               </td>
               <td className="tabular hidden py-2 sm:table-cell">
-                {s.elevGainM > 0 ? `${Math.round(s.elevGainM)} m` : "—"}
+                {s.elevGainM > 0
+                  ? `${Math.round(imperial ? metersToFeet(s.elevGainM) : s.elevGainM)} ${imperial ? "ft" : "m"}`
+                  : "—"}
               </td>
               <td className="tabular hidden py-2 text-right sm:table-cell">
                 {s.avgHr ?? "—"}
