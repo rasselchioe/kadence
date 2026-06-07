@@ -1,20 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getRecentRides, getRideCount, getStatsSince } from "@/lib/db/queries";
+import {
+  bestEfforts,
+  getProfile,
+  getRecentRides,
+  getRideCount,
+  getStatsSince,
+  weeklyVolume,
+} from "@/lib/db/queries";
+import { startOfWeekUTC } from "@/lib/date";
+import {
+  fmtDuration,
+  metersToFeet,
+  metersToKm,
+  metersToMiles,
+  type UnitSystem,
+} from "@/lib/units";
 import { StatGrid, type StatCardProps } from "@/components/data/stat-card";
+import { Section } from "@/components/data/section";
 import { RidesTable } from "@/components/data/rides-table";
-import { fmtDuration } from "@/lib/units";
+import { BestEffortCard } from "@/components/data/best-effort-card";
+import { VolumeBars } from "@/components/viz/volume-bars";
 
 export const metadata: Metadata = { title: "Dashboard" };
-
-function startOfWeekUTC(): Date {
-  const d = new Date();
-  const monday = (d.getUTCDay() + 6) % 7; // 0 = Monday
-  d.setUTCHours(0, 0, 0, 0);
-  d.setUTCDate(d.getUTCDate() - monday);
-  return d;
-}
 
 function EmptyState() {
   return (
@@ -50,18 +59,33 @@ export default async function DashboardPage() {
   const count = await getRideCount(user.id);
   if (count === 0) return <EmptyState />;
 
-  const [week, recent] = await Promise.all([
+  const profile = await getProfile(user.id);
+  const units = (profile?.units ?? "metric") as UnitSystem;
+  const imperial = units === "imperial";
+
+  const [week, recent, weeks, best] = await Promise.all([
     getStatsSince(user.id, startOfWeekUTC()),
     getRecentRides(user.id, 5),
+    weeklyVolume(user.id, 12),
+    bestEfforts(user.id),
   ]);
 
   const stats: StatCardProps[] = [
     {
       label: "This week",
-      value: (week.distanceM / 1000).toFixed(1),
-      unit: "km",
+      value: (imperial
+        ? metersToMiles(week.distanceM)
+        : metersToKm(week.distanceM)
+      ).toFixed(1),
+      unit: imperial ? "mi" : "km",
     },
-    { label: "Elevation +", value: Math.round(week.elevGainM), unit: "m" },
+    {
+      label: "Elevation +",
+      value: Math.round(
+        imperial ? metersToFeet(week.elevGainM) : week.elevGainM,
+      ),
+      unit: imperial ? "ft" : "m",
+    },
     { label: "Moving", value: fmtDuration(week.movingS) },
     { label: "Rides", value: week.rides },
   ];
@@ -77,18 +101,34 @@ export default async function DashboardPage() {
 
       <StatGrid stats={stats} />
 
-      <section className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between border-b border-ink pb-2">
-          <span className="label">Recent rides</span>
+      <Section ix="01" title="Volume · 12 weeks">
+        <VolumeBars weeks={weeks} units={units} height={140} />
+      </Section>
+
+      <Section
+        ix="02"
+        title="Recent rides"
+        action={
           <Link
             href="/rides"
             className="label transition-colors hover:text-crimson"
           >
             All →
           </Link>
-        </div>
+        }
+      >
         <RidesTable rides={recent} />
-      </section>
+      </Section>
+
+      {best.length > 0 && (
+        <Section ix="03" title="Best efforts">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-3 lg:grid-cols-5">
+            {best.map((e) => (
+              <BestEffortCard key={e.metric} effort={e} units={units} />
+            ))}
+          </div>
+        </Section>
+      )}
     </div>
   );
 }

@@ -8,10 +8,10 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", ix: "01" },
   { href: "/rides", label: "Rides", ix: "02" },
   { href: "/upload", label: "Upload", ix: "03" },
+  { href: "/trends", label: "Trends", ix: "04" },
 ];
 
 const SOON = [
-  { label: "Trends", ix: "04" },
   { label: "Goals", ix: "05" },
   { label: "Settings", ix: "06" },
 ];
