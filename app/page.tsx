@@ -1,11 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { SignInForm } from "@/components/auth/sign-in-form";
+import { createClient } from "@/lib/supabase/server";
 
-/**
- * Landing placeholder. The full marketing page + magic-link form lands in M1.
- * This exists so the design system (type, color, marks) is verifiable today.
- */
-export default function Home() {
+/** Landing + magic-link sign-in. Signed-in riders go straight to the app. */
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) redirect("/dashboard");
+
   return (
     <main className="min-h-screen bg-background px-6 py-16 md:px-12 md:py-24">
       <div className="mx-auto flex max-w-5xl flex-col gap-16">
@@ -29,15 +35,20 @@ export default function Home() {
             dashboard — map, elevation, splits, climbs, charts. Private by
             default. No feed, no followers, no leaderboards.
           </p>
-          <Link
-            href="/upload"
-            className="group inline-flex w-fit items-baseline gap-2 border-b border-ink pb-1 font-sans text-lg font-semibold text-foreground transition-colors hover:border-crimson hover:text-crimson"
-          >
-            Drop a GPX
-            <span className="transition-transform group-hover:translate-x-1">
-              →
-            </span>
-          </Link>
+
+          <div className="flex flex-col gap-4 pt-2">
+            <span className="label">Sign in</span>
+            <SignInForm />
+            <Link
+              href="/upload"
+              className="group inline-flex w-fit items-baseline gap-2 font-sans text-sm font-medium text-muted-foreground transition-colors hover:text-crimson"
+            >
+              …or try the demo without an account
+              <span className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+          </div>
         </section>
 
         <footer className="flex flex-wrap gap-6 border-t border-hairline pt-4">

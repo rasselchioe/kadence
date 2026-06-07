@@ -8,6 +8,7 @@ import * as schema from "./schema";
  * Lazy so the app builds without `DATABASE_URL` — it only throws when a query
  * actually runs server-side.
  */
+let client: ReturnType<typeof postgres> | undefined;
 let singleton: PostgresJsDatabase<typeof schema> | undefined;
 
 export function getDb(): PostgresJsDatabase<typeof schema> {
@@ -16,9 +17,19 @@ export function getDb(): PostgresJsDatabase<typeof schema> {
     if (!url) {
       throw new Error("DATABASE_URL is not set — add it to .env.local");
     }
-    singleton = drizzle(postgres(url, { prepare: false }), { schema });
+    client = postgres(url, { prepare: false });
+    singleton = drizzle(client, { schema });
   }
   return singleton;
+}
+
+/** Close the pooled connection (tests / graceful shutdown). */
+export async function closeDb(): Promise<void> {
+  if (client) {
+    await client.end();
+    client = undefined;
+    singleton = undefined;
+  }
 }
 
 export { schema };
