@@ -3,8 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getDb } from "@/lib/db";
-import { climb, ride, rideMetric, rideTrack, split } from "@/lib/db/schema";
+import { persistRide } from "@/lib/db/persist";
 import { MAX_GPX_BYTES, parseGpx } from "@/lib/gpx/parse";
 import { GPX_ERROR_COPY, GpxError } from "@/lib/gpx/schema";
 
@@ -79,55 +78,7 @@ export async function uploadRide(formData: FormData): Promise<UploadResult> {
   }
 
   try {
-    const db = getDb();
-    await db.transaction(async (tx) => {
-      await tx.insert(ride).values({
-        id: rideId,
-        profileId: user.id,
-        name: parsed.suggestedName,
-        sportType: "cycling",
-        startedAt: parsed.startedAt ? new Date(parsed.startedAt) : new Date(),
-        sourceApp: parsed.sourceApp,
-        gpxStoragePath: storagePath,
-        routeGeojson: parsed.geojson,
-      });
-
-      await tx.insert(rideMetric).values({ rideId, ...parsed.metrics });
-
-      await tx.insert(rideTrack).values({
-        rideId,
-        points: parsed.points,
-        pointCount: parsed.points.length,
-      });
-
-      if (parsed.splits.length > 0) {
-        await tx.insert(split).values(
-          parsed.splits.map((s) => ({
-            rideId,
-            km: s.km,
-            timeS: s.timeS,
-            paceKmh: s.paceKmh,
-            elevGainM: s.elevGainM,
-            avgPowerW: s.avgPowerW,
-            avgHr: s.avgHr,
-          })),
-        );
-      }
-
-      if (parsed.climbs.length > 0) {
-        await tx.insert(climb).values(
-          parsed.climbs.map((c) => ({
-            rideId,
-            startKm: c.startKm,
-            endKm: c.endKm,
-            lengthM: c.lengthM,
-            avgGradePct: c.avgGradePct,
-            category: c.category,
-            peakElevM: c.peakElevM,
-          })),
-        );
-      }
-    });
+    await persistRide({ rideId, profileId: user.id, parsed, storagePath });
   } catch (e) {
     // Roll back the orphaned blob if the DB write failed.
     await supabase.storage.from("gpx").remove([storagePath]);
