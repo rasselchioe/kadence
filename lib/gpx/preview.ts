@@ -1,4 +1,10 @@
-import type { Climb, ParsedRide, RideMetrics, Split } from "./schema";
+import type {
+  Climb,
+  ParsedRide,
+  RideMetrics,
+  Split,
+  TrackPoint,
+} from "./schema";
 import { movingAverage } from "./smoothing";
 
 /**
@@ -62,17 +68,15 @@ function pickEven<T>(arr: T[], max: number): T[] {
   return out;
 }
 
-export function toPreview(parsed: ParsedRide, fileName: string): PreviewRide {
-  const pts = parsed.points;
-
+/** Downsample trackpoints into the shared chart/map sample series. */
+export function buildSamples(points: TrackPoint[]): RideSample[] {
   // Smooth speed a touch so the chart reads cleanly on real GPS data.
   const speeds = movingAverage(
-    pts.map((p) => p.speedMps),
+    points.map((p) => p.speedMps),
     5,
   );
-
-  const samples: RideSample[] = pickEven(
-    pts.map((p, i) => ({
+  return pickEven(
+    points.map((p, i) => ({
       d: p.distanceM,
       km: p.distanceM / 1000,
       e: p.eleSmoothed ?? p.ele ?? 0,
@@ -85,8 +89,12 @@ export function toPreview(parsed: ParsedRide, fileName: string): PreviewRide {
     })),
     SAMPLE_TARGET,
   );
+}
 
-  const route = parsed.geojson.coordinates as [number, number][];
+/** Map's fitBounds from a [lon, lat] route. */
+export function coordsToBounds(
+  route: [number, number][],
+): [[number, number], [number, number]] {
   let minLon = Infinity;
   let maxLon = -Infinity;
   let minLat = Infinity;
@@ -97,22 +105,32 @@ export function toPreview(parsed: ParsedRide, fileName: string): PreviewRide {
     minLat = Math.min(minLat, lat);
     maxLat = Math.max(maxLat, lat);
   }
+  if (!Number.isFinite(minLon)) {
+    return [
+      [0, 0],
+      [0, 0],
+    ];
+  }
+  return [
+    [minLon, minLat],
+    [maxLon, maxLat],
+  ];
+}
 
+export function toPreview(parsed: ParsedRide, fileName: string): PreviewRide {
+  const route = parsed.geojson.coordinates as [number, number][];
   return {
     fileName,
     suggestedName: parsed.suggestedName,
     sourceApp: parsed.sourceApp,
     startedAt: parsed.startedAt,
-    pointCount: pts.length,
+    pointCount: parsed.points.length,
     metrics: parsed.metrics,
     splits: parsed.splits,
     climbs: parsed.climbs,
     route,
-    samples,
-    bounds: [
-      [minLon, minLat],
-      [maxLon, maxLat],
-    ],
+    samples: buildSamples(parsed.points),
+    bounds: coordsToBounds(route),
     hasHr: parsed.metrics.avgHr != null,
     hasPower: parsed.metrics.avgPowerW != null,
     hasCad: parsed.metrics.avgCadenceRpm != null,
