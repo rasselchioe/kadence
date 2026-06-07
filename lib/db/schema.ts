@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -19,6 +20,7 @@ export const profile = pgTable("profile", {
   theme: text("theme").default("light").notNull(), // 'light' | 'night' | 'auto'
   ftpW: integer("ftp_w"),
   maxHrBpm: integer("max_hr_bpm"),
+  weatherEnabled: boolean("weather_enabled").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

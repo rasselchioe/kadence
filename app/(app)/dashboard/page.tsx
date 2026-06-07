@@ -117,7 +117,7 @@ export default async function DashboardPage() {
           </Link>
         }
       >
-        <RidesTable rides={recent} />
+        <RidesTable rides={recent} units={units} />
       </Section>
 
       {best.length > 0 && (

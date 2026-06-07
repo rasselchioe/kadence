@@ -10,9 +10,10 @@ const NAV = [
   { href: "/upload", label: "Upload", ix: "03" },
   { href: "/trends", label: "Trends", ix: "04" },
   { href: "/goals", label: "Goals", ix: "05" },
+  { href: "/settings", label: "Settings", ix: "06" },
 ];
 
-const SOON = [{ label: "Settings", ix: "06" }];
+const SOON: { label: string; ix: string }[] = [];
 
 export function Sidebar({ archiveCount }: { archiveCount: number }) {
   const pathname = usePathname();

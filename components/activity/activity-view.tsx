@@ -4,7 +4,15 @@ import dynamic from "next/dynamic";
 import type { PreviewRide } from "@/lib/gpx/preview";
 import type { ClimbCategory } from "@/lib/gpx/schema";
 import { chartColors, climbCategoryColor } from "@/lib/tokens";
-import { fmtDuration } from "@/lib/units";
+import {
+  fmtDuration,
+  metersToFeet,
+  metersToKm,
+  metersToMiles,
+  mpsToKmh,
+  mpsToMph,
+} from "@/lib/units";
+import { useUnits } from "@/components/units-provider";
 import { StatGrid, type StatCardProps } from "@/components/data/stat-card";
 import { SplitsTable } from "@/components/data/splits-table";
 import { MetricChart } from "@/components/viz/metric-chart";
@@ -66,6 +74,8 @@ export function ActivityView({ ride }: { ride: PreviewRide }) {
 
 function ActivityBody({ ride }: { ride: PreviewRide }) {
   const { index } = useSelection();
+  const { units } = useUnits();
+  const imperial = units === "imperial";
   const m = ride.metrics;
   const highlightKm =
     index != null ? Math.floor(ride.samples[index].d / 1000) + 1 : null;
@@ -80,18 +90,35 @@ function ActivityBody({ ride }: { ride: PreviewRide }) {
     : "Unknown date";
 
   const stats: StatCardProps[] = [
-    { label: "Distance", value: (m.distanceM / 1000).toFixed(1), unit: "km" },
+    {
+      label: "Distance",
+      value: (imperial
+        ? metersToMiles(m.distanceM)
+        : metersToKm(m.distanceM)
+      ).toFixed(1),
+      unit: imperial ? "mi" : "km",
+    },
     { label: "Moving", value: fmtDuration(m.movingS) },
-    { label: "Elevation +", value: Math.round(m.elevGainM), unit: "m" },
+    {
+      label: "Elevation +",
+      value: Math.round(imperial ? metersToFeet(m.elevGainM) : m.elevGainM),
+      unit: imperial ? "ft" : "m",
+    },
     {
       label: "Avg speed",
-      value: (m.avgSpeedMps * 3.6).toFixed(1),
-      unit: "km/h",
+      value: (imperial
+        ? mpsToMph(m.avgSpeedMps)
+        : mpsToKmh(m.avgSpeedMps)
+      ).toFixed(1),
+      unit: imperial ? "mph" : "km/h",
     },
     {
       label: "Max speed",
-      value: (m.maxSpeedMps * 3.6).toFixed(1),
-      unit: "km/h",
+      value: (imperial
+        ? mpsToMph(m.maxSpeedMps)
+        : mpsToKmh(m.maxSpeedMps)
+      ).toFixed(1),
+      unit: imperial ? "mph" : "km/h",
     },
   ];
   if (m.avgHr != null)
